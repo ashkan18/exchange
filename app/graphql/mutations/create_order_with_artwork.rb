@@ -4,11 +4,12 @@ class Mutations::CreateOrderWithArtwork < Mutations::BaseMutation
   argument :artwork_id, String, 'Artwork Id', required: true
   argument :edition_set_id, String, 'EditionSet Id', required: false
   argument :quantity, Integer, 'Number of items in the line item', required: false
+  argument :is_auction, Boolean, 'Flag showing if this is an Auction Buy Now', required: false
 
   field :order_or_error, Mutations::OrderOrFailureUnionType, 'A union of success/failure', null: false
 
-  def resolve(artwork_id:, edition_set_id: nil, quantity: 1)
-    service = CreateOrderService.new(user_id: context[:current_user][:id], artwork_id: artwork_id, edition_set_id: edition_set_id, quantity: quantity)
+  def resolve(artwork_id:, edition_set_id: nil, quantity: 1, is_auction: nil)
+    service = CreateOrderService.new(user_id: context[:current_user][:id], artwork_id: artwork_id, edition_set_id: edition_set_id, quantity: quantity, is_auction: is_auction)
     service.process!
     {
       order_or_error: { order: service.order }
