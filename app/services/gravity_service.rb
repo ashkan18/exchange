@@ -1,5 +1,5 @@
 module GravityService
-  def self.fetch_partner(partner_id)
+  def self.get_partner(partner_id)
     Adapters::GravityV1.get("/partner/#{partner_id}/all")
   rescue Adapters::GravityNotFoundError
     raise Errors::ValidationError.new(:unknown_partner, partner_id: partner_id)
@@ -33,8 +33,8 @@ module GravityService
     nil
   end
 
-  def self.fetch_partner_location(partner_id)
-    partner = fetch_partner(partner_id)
+  def self.get_partner_location(partner_id)
+    partner = get_partner(partner_id)
     raise Errors::ValidationError.new(:missing_partner_location, partner_id: partner_id) if partner[:billing_location_id].blank?
 
     location = Adapters::GravityV1.get("/partner/#{partner_id}/location/#{partner[:billing_location_id]}")

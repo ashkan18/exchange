@@ -1,6 +1,8 @@
 class CreateOrderService
   attr_reader :order
 
+  AUCTION_PARTNER_TYPE = 'Auction'
+
   def initialize(user_id:, artwork_id:, edition_set_id: nil, quantity:)
     @user_id = user_id
     @artwork_id = artwork_id
@@ -8,6 +10,7 @@ class CreateOrderService
     @quantity = quantity
     @edition_set = nil
     @order = nil
+    @partner = nil
   end
 
   def process!
@@ -22,7 +25,8 @@ class CreateOrderService
         currency_code: @artwork[:price_currency],
         state: Order::PENDING,
         state_updated_at: Time.now.utc,
-        state_expires_at: Order::STATE_EXPIRATIONS[Order::PENDING].from_now
+        state_expires_at: Order::STATE_EXPIRATIONS[Order::PENDING].from_now,
+        is_auction: is_auction?
       )
       @order.line_items.create!(
         artwork_id: @artwork_id,
@@ -45,8 +49,13 @@ class CreateOrderService
     raise Errors::ValidationError.new(:unknown_artwork, artwork_id: @artwork_id) if @artwork.nil?
     raise Errors::ValidationError.new(:unpublished_artwork, artwork_id: @artwork_id) unless @artwork[:published]
     raise Errors::ValidationError.new(:not_acquireable, artwork_id: @artwork_id) unless @artwork[:acquireable]
+    @partner = GravityService.get_partner(@artwork[:partner_id])
 
     find_verify_edition_set
+  end
+
+  def is_auction?
+    @partner && @partner[:type] == 'Auction'
   end
 
   def post_process

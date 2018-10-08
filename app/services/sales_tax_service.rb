@@ -108,7 +108,7 @@ class SalesTaxService
   end
 
   def seller_address
-    @seller_address ||= GravityService.fetch_partner_location(@line_item.order.seller_id)
+    @seller_address ||= GravityService.get_partner_location(@line_item.order.seller_id)
   end
 
   def transaction_id

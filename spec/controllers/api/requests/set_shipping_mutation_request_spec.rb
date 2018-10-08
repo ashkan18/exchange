@@ -118,8 +118,8 @@ describe Api::GraphqlController, type: :request do
         before do
           allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-1').and_return(artwork1)
           allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-2').and_return(artwork2)
-          allow(GravityService).to receive(:fetch_partner).and_return(partner)
-          allow(GravityService).to receive(:fetch_partner_location).and_return(partner_location)
+          allow(GravityService).to receive(:get_partner).and_return(partner)
+          allow(GravityService).to receive(:get_partner_location).and_return(partner_location)
           @response = client.execute(mutation, set_shipping_input)
         end
         it 'sets fulfillment_type on the order' do
@@ -244,8 +244,8 @@ describe Api::GraphqlController, type: :request do
         it 'sets shipping info and sales tax on the order' do
           allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-1').and_return(artwork1)
           allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-2').and_return(artwork2)
-          allow(GravityService).to receive(:fetch_partner).and_return(partner)
-          allow(GravityService).to receive(:fetch_partner_location).and_return(partner_location)
+          allow(GravityService).to receive(:get_partner).and_return(partner)
+          allow(GravityService).to receive(:get_partner_location).and_return(partner_location)
           response = client.execute(mutation, set_shipping_input)
           expect(response.data.set_shipping.order_or_error.order.id).to eq order.id.to_s
           expect(response.data.set_shipping.order_or_error.order.state).to eq 'PENDING'
@@ -271,8 +271,8 @@ describe Api::GraphqlController, type: :request do
 
         describe '#shipping_total_cents' do
           before do
-            allow(GravityService).to receive(:fetch_partner).and_return(partner)
-            allow(GravityService).to receive(:fetch_partner_location).and_return(partner_location)
+            allow(GravityService).to receive(:get_partner).and_return(partner)
+            allow(GravityService).to receive(:get_partner_location).and_return(partner_location)
           end
           context 'with PICKUP as fulfillment type' do
             before do

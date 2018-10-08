@@ -127,7 +127,7 @@ describe Api::GraphqlController, type: :request do
           allow(GravityService).to receive(:get_artwork).and_return(artwork)
           allow(GravityService).to receive(:get_merchant_account).and_return(merchant_account)
           allow(GravityService).to receive(:get_credit_card).and_return(credit_card)
-          allow(GravityService).to receive(:fetch_partner).and_return(partner)
+          allow(GravityService).to receive(:get_partner).and_return(partner)
           response = client.execute(mutation, submit_order_input)
           expect(response.data.submit_order.order_or_error).not_to respond_to(:order)
           expect(response.data.submit_order.order_or_error.error.code).to eq 'invalid_state'

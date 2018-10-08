@@ -4,10 +4,10 @@ require 'support/gravity_helper'
 describe GravityService, type: :services do
   let(:partner_id) { 'partner-1' }
   let(:partner) { { _id: 'partner-1', billing_location_id: 'location-1' } }
-  describe '#fetch_partner' do
+  describe '#get_partner' do
     it 'calls the /partner endpoint' do
       allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/all")
-      GravityService.fetch_partner(partner_id)
+      GravityService.get_partner(partner_id)
       expect(Adapters::GravityV1).to have_received(:get).with("/partner/#{partner_id}/all")
     end
 
@@ -17,7 +17,7 @@ describe GravityService, type: :services do
       end
       it 'raises error' do
         expect do
-          GravityService.fetch_partner(partner_id)
+          GravityService.get_partner(partner_id)
         end.to raise_error do |error|
           expect(error).to be_a Errors::ValidationError
           expect(error.code).to eq :unknown_partner
@@ -26,31 +26,31 @@ describe GravityService, type: :services do
     end
   end
 
-  describe '#fetch_partner_location' do
+  describe '#get_partner_location' do
     let(:valid_location) { { country: 'US', state: 'NY', postal_code: '12345' } }
     let(:invalid_location) { { country: 'US', state: 'Floridada' } }
     before do
-      allow(GravityService).to receive(:fetch_partner).and_return(partner)
+      allow(GravityService).to receive(:get_partner).and_return(partner)
     end
     it 'fetches the partner' do
-      expect(GravityService).to receive(:fetch_partner).with(partner_id)
+      expect(GravityService).to receive(:get_partner).with(partner_id)
       allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/location/#{partner[:billing_location_id]}").and_return(valid_location)
-      GravityService.fetch_partner_location(partner_id)
+      GravityService.get_partner_location(partner_id)
     end
     it 'calls the correct location Gravity endpoint' do
       expect(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/location/#{partner[:billing_location_id]}").and_return(valid_location)
-      GravityService.fetch_partner_location(partner_id)
+      GravityService.get_partner_location(partner_id)
     end
     context 'with a valid partner location' do
       it 'returns a new address' do
         allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/location/#{partner[:billing_location_id]}").and_return(valid_location)
-        expect(GravityService.fetch_partner_location(partner_id)).to be_a Address
+        expect(GravityService.get_partner_location(partner_id)).to be_a Address
       end
     end
     context 'with an invalid partner location' do
       it 'rescues AddressError and raises ValidationError' do
         allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/location/#{partner[:billing_location_id]}").and_return(invalid_location)
-        expect { GravityService.fetch_partner_location(partner_id) }.to raise_error do |error|
+        expect { GravityService.get_partner_location(partner_id) }.to raise_error do |error|
           expect(error).to be_a Errors::ValidationError
           expect(error.code).to eq :invalid_seller_address
           expect(error.data[:partner_id]).to eq partner_id

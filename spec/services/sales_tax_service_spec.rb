@@ -77,7 +77,7 @@ describe SalesTaxService, type: :services do
 
   describe '#sales_tax' do
     before do
-      allow(GravityService).to receive(:fetch_partner_location).with(order.seller_id).and_return(partner_address)
+      allow(GravityService).to receive(:get_partner_location).with(order.seller_id).and_return(partner_address)
     end
     it 'calls fetch_sales_tax and returns the sales tax in cents' do
       expect(@service_ship).to receive(:fetch_sales_tax).and_return(double(amount_to_collect: 1.00))
@@ -97,7 +97,7 @@ describe SalesTaxService, type: :services do
 
   describe '#seller_address' do
     it "returns the partner's location" do
-      expect(GravityService).to receive(:fetch_partner_location).with(order.seller_id).and_return(partner_address)
+      expect(GravityService).to receive(:get_partner_location).with(order.seller_id).and_return(partner_address)
       expect(@service_ship.send(:seller_address)).to eq partner_address
     end
   end
@@ -131,7 +131,7 @@ describe SalesTaxService, type: :services do
 
   describe '#fetch_sales_tax' do
     it 'calls the Taxjar API with the correct parameters' do
-      allow(GravityService).to receive(:fetch_partner_location).with(order.seller_id).and_return(partner_address)
+      allow(GravityService).to receive(:get_partner_location).with(order.seller_id).and_return(partner_address)
       allow(taxjar_client).to receive(:tax_for_order).with(base_tax_params)
       @service_ship.send(:fetch_sales_tax)
       expect(taxjar_client).to have_received(:tax_for_order).with(base_tax_params)
@@ -152,7 +152,7 @@ describe SalesTaxService, type: :services do
         before do
           order.submit!
           order.approve!
-          allow(GravityService).to receive(:fetch_partner_location).with(order.seller_id).and_return(partner_address)
+          allow(GravityService).to receive(:get_partner_location).with(order.seller_id).and_return(partner_address)
         end
         it 'raises a ProcessingError with a code of tax_recording_failure' do
           expect(taxjar_client).to receive(:create_order).and_raise(Taxjar::Error)
@@ -198,7 +198,7 @@ describe SalesTaxService, type: :services do
       order.approve!
     end
     it 'calls the Taxjar API with the correct parameters' do
-      allow(GravityService).to receive(:fetch_partner_location).with(order.seller_id).and_return(partner_address)
+      allow(GravityService).to receive(:get_partner_location).with(order.seller_id).and_return(partner_address)
       expect(taxjar_client).to receive(:create_order).with(params)
       @service_ship.send(:post_transaction)
     end
@@ -275,7 +275,7 @@ describe SalesTaxService, type: :services do
       )
     end
     it 'calls the TaxJar API with the correct parameters' do
-      allow(GravityService).to receive(:fetch_partner_location).with(order.seller_id).and_return(partner_address)
+      allow(GravityService).to receive(:get_partner_location).with(order.seller_id).and_return(partner_address)
       expect(taxjar_client).to receive(:create_refund).with(params)
       @service_ship.send(:post_refund, transaction_date)
     end
@@ -283,7 +283,7 @@ describe SalesTaxService, type: :services do
 
   describe '#construct_tax_params' do
     before do
-      allow(GravityService).to receive(:fetch_partner_location).with(order.seller_id).and_return(partner_address)
+      allow(GravityService).to receive(:get_partner_location).with(order.seller_id).and_return(partner_address)
     end
     it 'returns the parameters shared by all API calls to TaxJar' do
       expect(@service_ship.send(:construct_tax_params)).to eq base_tax_params

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_10_03_191806) do
+ActiveRecord::Schema.define(version: 2018_10_08_155337) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -105,6 +105,7 @@ ActiveRecord::Schema.define(version: 2018_10_03_191806) do
     t.integer "seller_total_cents"
     t.string "buyer_phone_number"
     t.string "state_reason"
+    t.boolean "is_auction"
     t.index ["buyer_id"], name: "index_orders_on_buyer_id"
     t.index ["code"], name: "index_orders_on_code"
     t.index ["seller_id"], name: "index_orders_on_seller_id"

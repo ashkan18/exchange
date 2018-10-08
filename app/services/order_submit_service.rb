@@ -47,7 +47,7 @@ class OrderSubmitService
     end
     @credit_card = GravityService.get_credit_card(@order.credit_card_id)
     assert_credit_card!
-    @partner = GravityService.fetch_partner(@order.seller_id)
+    @partner = GravityService.get_partner(@order.seller_id)
     raise Errors::ValidationError.new(:missing_commission_rate, partner_id: @partner[:id]) if @partner[:effective_commission_rate].blank?
 
     @merchant_account = GravityService.get_merchant_account(@order.seller_id)
