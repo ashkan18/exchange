@@ -105,7 +105,7 @@ ActiveRecord::Schema.define(version: 2018_10_08_155337) do
     t.integer "seller_total_cents"
     t.string "buyer_phone_number"
     t.string "state_reason"
-    t.boolean "is_auction"
+    t.boolean "auction", default: false
     t.index ["buyer_id"], name: "index_orders_on_buyer_id"
     t.index ["code"], name: "index_orders_on_code"
     t.index ["seller_id"], name: "index_orders_on_seller_id"

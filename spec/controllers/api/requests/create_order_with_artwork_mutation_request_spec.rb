@@ -6,6 +6,9 @@ describe Api::GraphqlController, type: :request do
     include_context 'GraphQL Client'
     let(:artwork_id) { 'artwork-id' }
     let(:edition_set_id) { 'edition-set-id' }
+    let(:artwork) { gravity_v1_artwork }
+    let(:partner_type) { 'Gallery' }
+    let(:partner) { gravity_v1_partner(type: partner_type) }
     let(:partner_id) { 'gravity-partner-id' }
     let(:quantity) { 2 }
     let(:mutation_input) do
@@ -76,10 +79,10 @@ describe Api::GraphqlController, type: :request do
         end
       end
 
-      context 'with successful artwork fetch' do
-        let(:artwork) { gravity_v1_artwork }
+      context 'with successful artwork/partner fetches' do
         before do
           expect(GravityService).to receive(:get_artwork).with(artwork_id).and_return(artwork)
+          allow(GravityService).to receive(:get_partner).with(partner_id).and_return(partner)
         end
         context 'artwork with one edition set' do
           context 'without passing edition_set_id' do
@@ -97,6 +100,7 @@ describe Api::GraphqlController, type: :request do
                 expect(order.line_items.first.artwork_id).to eq 'artwork-id'
                 expect(order.line_items.first.edition_set_id).to eq 'edition-set-id'
                 expect(order.line_items.first.quantity).to eq 2
+                expect(order.auction).to eq false
               end.to change(Order, :count).by(1).and change(LineItem, :count).by(1)
             end
           end
@@ -195,6 +199,7 @@ describe Api::GraphqlController, type: :request do
               expect(order.line_items.first.artwork_id).to eq 'artwork-id'
               expect(order.line_items.first.edition_set_id).to be_nil
               expect(order.line_items.first.quantity).to eq 2
+              expect(order.auction).to eq false
             end.to change(Order, :count).by(1).and change(LineItem, :count).by(1)
           end
         end
@@ -252,11 +257,51 @@ describe Api::GraphqlController, type: :request do
             end
           end
         end
+
+        context 'with artwork from Auction partner' do
+          let(:partner_type) { 'Auction' }
+          it 'creates order with auction flag' do
+            expect do
+              response = client.execute(mutation, input: mutation_input.except(:editionSetId))
+              expect(response.data.create_order_with_artwork.order_or_error.order.id).not_to be_nil
+              expect(response.data.create_order_with_artwork.order_or_error).not_to respond_to(:error)
+              order = Order.find(response.data.create_order_with_artwork.order_or_error.order.id)
+              expect(order.currency_code).to eq 'USD'
+              expect(order.buyer_id).to eq jwt_user_id
+              expect(order.seller_id).to eq partner_id
+              expect(order.line_items.count).to eq 1
+              expect(order.line_items.first.price_cents).to eq 4200_42
+              expect(order.line_items.first.artwork_id).to eq 'artwork-id'
+              expect(order.line_items.first.edition_set_id).to eq 'edition-set-id'
+              expect(order.line_items.first.quantity).to eq 2
+              expect(order.auction).to eq true
+            end.to change(Order, :count).by(1).and change(LineItem, :count).by(1)
+          end
+
+          it 'creates order with passed in auction flag' do
+            expect do
+              response = client.execute(mutation, input: mutation_input.except(:editionSetId).merge(auction: false))
+              expect(response.data.create_order_with_artwork.order_or_error.order.id).not_to be_nil
+              expect(response.data.create_order_with_artwork.order_or_error).not_to respond_to(:error)
+              order = Order.find(response.data.create_order_with_artwork.order_or_error.order.id)
+              expect(order.currency_code).to eq 'USD'
+              expect(order.buyer_id).to eq jwt_user_id
+              expect(order.seller_id).to eq partner_id
+              expect(order.line_items.count).to eq 1
+              expect(order.line_items.first.price_cents).to eq 4200_42
+              expect(order.line_items.first.artwork_id).to eq 'artwork-id'
+              expect(order.line_items.first.edition_set_id).to eq 'edition-set-id'
+              expect(order.line_items.first.quantity).to eq 2
+              expect(order.auction).to eq false
+            end.to change(Order, :count).by(1).and change(LineItem, :count).by(1)
+          end
+        end
       end
 
       context 'with artwork price in unsupported currency' do
         before do
           expect(GravityService).to receive(:get_artwork).with(artwork_id).and_return(gravity_v1_artwork(edition_sets: nil, price_currency: 'RIA'))
+          expect(GravityService).to receive(:get_partner).and_return(partner)
         end
         it 'returns error' do
           expect do

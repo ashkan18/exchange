@@ -28,7 +28,7 @@ describe CreateOrderService, type: :services do
             expect(order.line_items.first.edition_set_id).to be_nil
             expect(order.line_items.first.quantity).to eq 2
             expect(order.items_total_cents).to eq 1080024
-            expect(order.is_auction?).to eq false
+            expect(order.auction?).to eq false
           end.to change(Order, :count).by(1).and change(LineItem, :count).by(1)
         end
         it 'sets state_expires_at for newly pending order' do
@@ -43,10 +43,10 @@ describe CreateOrderService, type: :services do
 
         context 'with auction partner' do
           let(:partner) { gravity_v1_partner(type: 'Auction') }
-          it 'sets is_auction to true' do
+          it 'sets auction to true' do
             service.process!
             order = service.order
-            expect(order.is_auction?).to eq true
+            expect(order.auction?).to eq true
           end
         end
       end
@@ -178,8 +178,9 @@ describe CreateOrderService, type: :services do
         end
       end
 
-      context 'with passing is_auction' do
-        let(:service) { CreateOrderService.new(user_id: user_id, artwork_id: 'artwork-id', edition_set_id: nil, quantity: 2, is_auction: true) }
+      context 'with passing auction' do
+        let(:artwork) { gravity_v1_artwork(edition_sets: nil) }
+        let(:service) { CreateOrderService.new(user_id: user_id, artwork_id: 'artwork-id', edition_set_id: nil, quantity: 2, auction: true) }
         before do
           expect(Adapters::GravityV1).to receive(:get).and_return(artwork)
           expect(GravityService).not_to receive(:get_partner)
@@ -198,7 +199,7 @@ describe CreateOrderService, type: :services do
             expect(order.line_items.first.edition_set_id).to be_nil
             expect(order.line_items.first.quantity).to eq 2
             expect(order.items_total_cents).to eq 1080024
-            expect(order.is_auction?).to eq true
+            expect(order.auction?).to eq true
           end.to change(Order, :count).by(1).and change(LineItem, :count).by(1)
         end
       end

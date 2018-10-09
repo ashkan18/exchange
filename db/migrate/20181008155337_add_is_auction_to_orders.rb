@@ -1,5 +1,5 @@
 class AddIsAuctionToOrders < ActiveRecord::Migration[5.2]
   def change
-    add_column :orders, :is_auction, :boolean, default: false
+    add_column :orders, :auction, :boolean, default: false
   end
 end

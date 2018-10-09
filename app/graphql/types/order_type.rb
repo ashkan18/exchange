@@ -26,6 +26,7 @@ class Types::OrderType < Types::BaseObject
   field :last_submitted_at, Types::DateTimeType, null: true
   field :last_approved_at, Types::DateTimeType, null: true
   field :line_items, Types::LineItemType.connection_type, null: true
+  field :auction, Boolean, null: false
 
   def buyer
     OpenStruct.new(

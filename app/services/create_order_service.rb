@@ -3,7 +3,7 @@ class CreateOrderService
 
   AUCTION_PARTNER_TYPE = 'Auction'.freeze
 
-  def initialize(user_id:, artwork_id:, edition_set_id: nil, quantity:, is_auction: nil)
+  def initialize(user_id:, artwork_id:, edition_set_id: nil, quantity:, auction: nil)
     @user_id = user_id
     @artwork_id = artwork_id
     @edition_set_id = edition_set_id
@@ -11,7 +11,7 @@ class CreateOrderService
     @edition_set = nil
     @order = nil
     @partner = nil
-    @auction = is_auction
+    @auction = auction
   end
 
   def process!
@@ -27,7 +27,7 @@ class CreateOrderService
         state: Order::PENDING,
         state_updated_at: Time.now.utc,
         state_expires_at: Order::STATE_EXPIRATIONS[Order::PENDING].from_now,
-        is_auction: auction?
+        auction: auction?
       )
       @order.line_items.create!(
         artwork_id: @artwork_id,
@@ -55,10 +55,10 @@ class CreateOrderService
   end
 
   def auction?
-    @auction ||= begin
-      @partner = GravityService.get_partner(@artwork[:partner_id])
-      @partner && @partner[:type] == AUCTION_PARTNER_TYPE
-    end
+    return @auction unless @auction.nil?
+
+    @partner ||= GravityService.get_partner(@artwork[:partner][:_id])
+    @partner && @partner[:type] == AUCTION_PARTNER_TYPE
   end
 
   def post_process
