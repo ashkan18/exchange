@@ -112,7 +112,7 @@ describe OrderCancellationService, type: :services do
           before do
             artwork_inventory_undeduct_request
             edition_set_inventory_undeduct_request
-            service.refund!
+            service.return!
           end
           it 'calls to undeduct inventory' do
             expect(artwork_inventory_undeduct_request).to have_been_requested
@@ -137,7 +137,7 @@ describe OrderCancellationService, type: :services do
             allow(Stripe::Refund).to receive(:create)
               .with(hash_including(charge: captured_charge.id))
               .and_raise(Stripe::StripeError.new('too late to refund buddy...', json_body: { error: { code: 'something', message: 'refund failed' } }))
-            expect { service.refund! }.to raise_error(Errors::ProcessingError).and change(order.transactions, :count).by(1)
+            expect { service.return! }.to raise_error(Errors::ProcessingError).and change(order.transactions, :count).by(1)
           end
           it 'raises a ProcessingError and records the transaction' do
             expect(order.transactions.last.external_id).to eq captured_charge.id

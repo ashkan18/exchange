@@ -40,7 +40,7 @@ class Order < ApplicationRecord
     SHIP = 'ship'.freeze
   ].freeze
 
-  ACTIONS = %i[abandon submit approve reject fulfill seller_lapse refund].freeze
+  ACTIONS = %i[abandon submit approve reject fulfill seller_lapse return].freeze
   ACTION_REASONS = {
     seller_lapse: REASONS[CANCELED][:seller_lapsed],
     reject: REASONS[CANCELED][:seller_rejected]
@@ -174,7 +174,7 @@ class Order < ApplicationRecord
     machine.when(:seller_lapse, SUBMITTED => CANCELED)
     machine.when(:cancel, SUBMITTED => CANCELED)
     machine.when(:fulfill, APPROVED => FULFILLED)
-    machine.when(:refund, APPROVED => RETURNED, FULFILLED => RETURNED)
+    machine.when(:return, APPROVED => RETURNED, FULFILLED => RETURNED)
     machine.on(:any) do
       self.state = machine.state
     end

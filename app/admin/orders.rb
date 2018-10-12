@@ -36,7 +36,7 @@ ActiveAdmin.register Order do
   end
 
   member_action :refund, method: :post do
-    OrderCancellationService.new(resource).refund!
+    OrderCancellationService.new(resource).return!
     redirect_to resource_path, notice: "Refunded!"
   end
 
