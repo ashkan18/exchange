@@ -124,10 +124,10 @@ describe OrderCancellationService, type: :services do
             expect(order.transactions.last.status).to eq Transaction::SUCCESS
           end
           it 'updates the order state' do
-            expect(order.state).to eq Order::REFUNDED
+            expect(order.state).to eq Order::RETURNED
           end
           it 'queues notification job' do
-            expect(PostNotificationJob).to have_been_enqueued.with(order.id, Order::REFUNDED, user_id)
+            expect(PostNotificationJob).to have_been_enqueued.with(order.id, Order::RETURNED, user_id)
           end
         end
         context 'with an unsuccessful refund' do

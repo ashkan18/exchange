@@ -5,5 +5,5 @@ class Types::OrderStateEnum < Types::BaseEnum
   value 'APPROVED', 'order is approved by seller', value: Order::APPROVED
   value 'CANCELED', 'order is canceled', value: Order::CANCELED
   value 'FULFILLED', 'order is fulfilled by seller', value: Order::FULFILLED
-  value 'REFUNDED', 'order is refunded after being approved or fulfilled', value: Order::REFUNDED
+  value 'RETURNED', 'order is refunded after being approved or fulfilled', value: Order::RETURNED
 end

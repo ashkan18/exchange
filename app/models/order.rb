@@ -19,7 +19,7 @@ class Order < ApplicationRecord
     # Order is completely fulfilled by the seller
     FULFILLED = 'fulfilled'.freeze.freeze,
     # Order was refunded after approval/fulfillment
-    REFUNDED = 'refunded'.freeze
+    RETURNED = 'returned'.freeze
   ].freeze
 
   REASONS = {
@@ -174,7 +174,7 @@ class Order < ApplicationRecord
     machine.when(:seller_lapse, SUBMITTED => CANCELED)
     machine.when(:cancel, SUBMITTED => CANCELED)
     machine.when(:fulfill, APPROVED => FULFILLED)
-    machine.when(:refund, APPROVED => REFUNDED, FULFILLED => REFUNDED)
+    machine.when(:refund, APPROVED => RETURNED, FULFILLED => RETURNED)
     machine.on(:any) do
       self.state = machine.state
     end

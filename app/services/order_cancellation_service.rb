@@ -27,7 +27,7 @@ class OrderCancellationService
     @order.refund! do
       process_refund
     end
-    PostNotificationJob.perform_later(@order.id, Order::REFUNDED, @by)
+    PostNotificationJob.perform_later(@order.id, Order::RETURNED, @by)
   ensure
     @order.transactions << @transaction if @transaction.present?
   end
