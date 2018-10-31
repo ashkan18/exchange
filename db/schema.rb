@@ -79,11 +79,8 @@ ActiveRecord::Schema.define(version: 2018_10_29_122615) do
     t.integer "amount_cents"
     t.string "from_id"
     t.string "from_type"
-    t.string "state"
     t.string "creator_id"
-    t.string "resolved_by_id"
     t.uuid "responds_to_id"
-    t.datetime "resolved_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["order_id"], name: "index_offers_on_order_id"

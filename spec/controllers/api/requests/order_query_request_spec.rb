@@ -33,7 +33,7 @@ describe Api::GraphqlController, type: :request do
 
     let(:query) do
       <<-GRAPHQL
-        query($id: ID, $offerFromId: String, $offerFromType: String, $offerState: OfferStateEnum) {
+        query($id: ID, $offerFromId: String, $offerFromType: String) {
           order(id: $id) {
             id
             mode
@@ -82,7 +82,7 @@ describe Api::GraphqlController, type: :request do
                 }
               }
             }
-            offers(fromId: $offerFromId, fromType: $offerFromType, state: $offerState) {
+            offers(fromId: $offerFromId, fromType: $offerFromType) {
               edges {
                 node {
                   id
@@ -252,15 +252,6 @@ describe Api::GraphqlController, type: :request do
           end
           it 'filters by from type' do
             result = client.execute(query, id: user1_order1.id, offerFromType: 'gallery')
-            expect(result.data.order.offers.edges.count).to eq 1
-            expect(result.data.order.offers.edges.map(&:node).map(&:id)).to eq [offer2.id]
-            expect(result.data.order.offers.edges.map(&:node).map(&:amount_cents)).to eq [300]
-            expect(result.data.order.offers.edges.map(&:node).map(&:from).map(&:id)).to eq [partner_id]
-            expect(result.data.order.offers.edges.map(&:node).map(&:from).map(&:__typename)).to eq %w[Partner]
-          end
-          it 'filters by from state' do
-            offer2.update!(state: Offer::ACCEPTED)
-            result = client.execute(query, id: user1_order1.id, offerState: 'ACCEPTED')
             expect(result.data.order.offers.edges.count).to eq 1
             expect(result.data.order.offers.edges.map(&:node).map(&:id)).to eq [offer2.id]
             expect(result.data.order.offers.edges.map(&:node).map(&:amount_cents)).to eq [300]

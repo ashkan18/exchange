@@ -29,7 +29,6 @@ class Types::OrderType < Types::BaseObject
   field :offers, Types::OfferType.connection_type, null: true do
     argument :from_id, String, required: false
     argument :from_type, String, required: false
-    argument :state, Types::OfferStateEnum, required: false
   end
   field :last_offer, Types::OfferType, null: true
   field :tax_total_cents, Integer, null: true
@@ -70,7 +69,7 @@ class Types::OrderType < Types::BaseObject
   end
 
   def offers(**args)
-    if args.keys.any? { |ar| %i[from_id from_type state].include? ar }
+    if args.keys.any? { |ar| %i[from_id from_type].include? ar }
       object.offers.where(args.slice(:from_id, :from_type, :state))
     else
       object.offers.all

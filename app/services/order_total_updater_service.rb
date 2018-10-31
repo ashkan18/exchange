@@ -10,7 +10,7 @@ class OrderTotalUpdaterService
     raise Errors::ValidationError.new('Missing price info on line items', 'd2e1cc') if @order.line_items.any? { |li| li.price_cents.nil? }
 
     @order.with_lock do
-      @order.items_total_cents = @order.line_items.map(&:total_amount_cents).sum
+      @order.items_total_cents = calculate_items_total_cents
       @order.buyer_total_cents = @order.items_total_cents + @order.shipping_total_cents.to_i + @order.tax_total_cents.to_i
       if @commission_rate.present?
         set_commission_on_line_items
@@ -24,6 +24,13 @@ class OrderTotalUpdaterService
   end
 
   private
+
+  def calculate_items_total_cents
+    case @order.mode
+    when Order::BUY then @order.line_items.map(&:total_amount_cents).sum
+    when Order::OFFER then @order.last_offer&.amount_cents || 0
+    end
+  end
 
   def set_commission_on_line_items
     @order.line_items.each do |li|
