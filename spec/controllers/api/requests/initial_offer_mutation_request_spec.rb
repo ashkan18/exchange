@@ -41,12 +41,14 @@ describe Api::GraphqlController, type: :request do
                       node {
                         id
                         amountCents
+                        state
                       }
                     }
                   }
                   lastOffer {
                     id
                     amountCents
+                    state
                     from {
                       ... on User {
                         id
@@ -128,6 +130,7 @@ describe Api::GraphqlController, type: :request do
           response_order = response.data.initial_offer.order_or_error.order
           expect(response_order.id).to eq(order_id)
           expect(response_order.last_offer.amount_cents).to eq 500
+          expect(response_order.last_offer.state).to eq 'PENDING'
           expect(response_order.last_offer.from.id).to eq user_id
           expect(response_order.last_offer.responds_to).to be_nil
           expect(response_order.last_offer.creator_id).to eq user_id

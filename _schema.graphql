@@ -241,6 +241,7 @@ type Offer {
   id: ID!
   order: Order!
   respondsTo: Offer
+  state: OfferStateEnum!
 }
 
 # The connection type for Offer.
@@ -262,6 +263,14 @@ type OfferEdge {
 
   # The item at the end of the edge.
   node: Offer
+}
+
+enum OfferStateEnum {
+  # offer is still pending submission by buyer
+  PENDING
+
+  # order is submitted by buyer
+  SUBMITTED
 }
 
 # An Order
