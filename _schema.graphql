@@ -241,6 +241,7 @@ type Offer {
   id: ID!
   order: Order!
   respondsTo: Offer
+  submittedAt: DateTime
 }
 
 # The connection type for Offer.
