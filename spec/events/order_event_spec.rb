@@ -4,7 +4,7 @@ describe OrderEvent, type: :events do
   before { Timecop.freeze(Time.parse('2018-08-16 15:48:00 -0400')) }
   after { Timecop.return }
 
-  let(:partner_id) { 'partner-1' }
+  let(:seller_id) { 'partner-1' }
   let(:user_id) { 'user-1' }
   let(:shipping_info) do
     {
@@ -88,7 +88,7 @@ describe OrderEvent, type: :events do
       expect(event.properties[:buyer_id]).to eq user_id
       expect(event.properties[:buyer_type]).to eq Order::USER
       expect(event.properties[:fulfillment_type]).to eq Order::SHIP
-      expect(event.properties[:seller_id]).to eq partner_id
+      expect(event.properties[:seller_id]).to eq seller_id
       expect(event.properties[:seller_type]).to eq 'gallery'
       expect(event.properties[:items_total_cents]).to eq 300
       expect(event.properties[:shipping_total_cents]).to eq 50

@@ -3,8 +3,8 @@ require 'rails_helper'
 describe Api::GraphqlController, type: :request do
   describe 'order query' do
     include_context 'GraphQL Client'
-    let(:partner_id) { jwt_partner_ids.first }
-    let(:second_partner_id) { 'partner-2' }
+    let(:seller_id) { jwt_partner_ids.first }
+    let(:second_seller_id) { 'partner-2' }
     let(:user_id) { jwt_user_id }
     let(:second_user) { 'user2' }
     let(:state) { Order::PENDING }
@@ -14,7 +14,7 @@ describe Api::GraphqlController, type: :request do
       Fabricate(
         :order,
         mode: order_mode,
-        seller_id: partner_id,
+        seller_id: seller_id,
         seller_type: 'gallery',
         buyer_id: user_id,
         buyer_type: 'user',
@@ -30,7 +30,7 @@ describe Api::GraphqlController, type: :request do
         state_reason: state == Order::CANCELED ? 'seller_lapsed' : nil
       )
     end
-    let!(:user2_order1) { Fabricate(:order, seller_id: second_partner_id, seller_type: 'partner', buyer_id: second_user, buyer_type: 'user') }
+    let!(:user2_order1) { Fabricate(:order, seller_id: second_seller_id, seller_type: 'partner', buyer_id: second_user, buyer_type: 'user') }
 
     let(:query) do
       <<-GRAPHQL
@@ -192,7 +192,7 @@ describe Api::GraphqlController, type: :request do
         result = client.execute(query, id: user1_order1.id)
         expect(result.data.order.mode).to eq 'BUY'
         expect(result.data.order.buyer.id).to eq user_id
-        expect(result.data.order.seller.id).to eq partner_id
+        expect(result.data.order.seller.id).to eq seller_id
         expect(result.data.order.currency_code).to eq 'USD'
         expect(result.data.order.state).to eq 'PENDING'
         expect(result.data.order.items_total_cents).to eq 0
@@ -204,7 +204,7 @@ describe Api::GraphqlController, type: :request do
       it 'returns order when accessing correct order by code' do
         result = client.execute(query_by_code, code: user1_order1.code)
         expect(result.data.order.buyer.id).to eq user_id
-        expect(result.data.order.seller.id).to eq partner_id
+        expect(result.data.order.seller.id).to eq seller_id
         expect(result.data.order.currency_code).to eq 'USD'
         expect(result.data.order.state).to eq 'PENDING'
         expect(result.data.order.items_total_cents).to eq 0
@@ -234,7 +234,7 @@ describe Api::GraphqlController, type: :request do
         let(:state) { Order::SUBMITTED }
         let(:order_mode) { Order::OFFER }
         let!(:buyer_offer) { Fabricate(:offer, order: user1_order1, amount_cents: 200, from_id: user_id, from_type: Order::USER, submitted_at: Date.new(2018, 1, 1)) }
-        let!(:seller_offer) { Fabricate(:offer, order: user1_order1, amount_cents: 300, from_id: partner_id, from_type: 'gallery', responds_to_id: buyer_offer.id, submitted_at: Date.new(2018, 1, 2)) }
+        let!(:seller_offer) { Fabricate(:offer, order: user1_order1, amount_cents: 300, from_id: seller_id, from_type: 'gallery', responds_to_id: buyer_offer.id, submitted_at: Date.new(2018, 1, 2)) }
         let!(:pending_buyer_offer) { Fabricate(:offer, order: user1_order1, amount_cents: 200, from_id: user_id, from_type: Order::USER) }
         before do
           user1_order1.update! last_offer: seller_offer
@@ -244,14 +244,14 @@ describe Api::GraphqlController, type: :request do
           expect(result.data.order.offers.edges.count).to eq 2
           expect(result.data.order.offers.edges.map(&:node).map(&:id)).to match_array [buyer_offer.id, seller_offer.id]
           expect(result.data.order.offers.edges.map(&:node).map(&:amount_cents)).to match_array [200, 300]
-          expect(result.data.order.offers.edges.map(&:node).map(&:from).map(&:id)).to match_array [user_id, partner_id]
+          expect(result.data.order.offers.edges.map(&:node).map(&:from).map(&:id)).to match_array [user_id, seller_id]
           expect(result.data.order.offers.edges.map(&:node).map(&:from).map(&:__typename)).to match_array %w[User Partner]
           expect(result.data.order.offers.edges.first.node.submitted_at).to eq '2018-01-02T00:00:00Z'
         end
         it 'includes last_offer' do
           result = client.execute(query, id: user1_order1.id)
           expect(result.data.order.last_offer.id).to eq seller_offer.id
-          expect(result.data.order.last_offer.from.id).to eq partner_id
+          expect(result.data.order.last_offer.from.id).to eq seller_id
           expect(result.data.order.last_offer.from.__typename).to eq 'Partner'
           expect(result.data.order.last_offer.responds_to.id).to eq buyer_offer.id
         end
@@ -303,7 +303,7 @@ describe Api::GraphqlController, type: :request do
             expect(result.data.order.offers.edges.count).to eq 1
             expect(result.data.order.offers.edges.map(&:node).map(&:id)).to eq [seller_offer.id]
             expect(result.data.order.offers.edges.map(&:node).map(&:amount_cents)).to eq [300]
-            expect(result.data.order.offers.edges.map(&:node).map(&:from).map(&:id)).to eq [partner_id]
+            expect(result.data.order.offers.edges.map(&:node).map(&:from).map(&:id)).to eq [seller_id]
             expect(result.data.order.offers.edges.map(&:node).map(&:from).map(&:__typename)).to eq %w[Partner]
           end
         end
@@ -377,10 +377,10 @@ describe Api::GraphqlController, type: :request do
 
     context 'partner accessing order' do
       it 'returns order when accessing correct order' do
-        another_user_order = Fabricate(:order, seller_id: partner_id, buyer_id: 'someone-else-id')
+        another_user_order = Fabricate(:order, seller_id: seller_id, buyer_id: 'someone-else-id')
         result = client.execute(query, id: another_user_order.id)
         expect(result.data.order.buyer.id).to eq 'someone-else-id'
-        expect(result.data.order.seller.id).to eq partner_id
+        expect(result.data.order.seller.id).to eq seller_id
         expect(result.data.order.currency_code).to eq 'USD'
         expect(result.data.order.state).to eq 'PENDING'
         expect(result.data.order.items_total_cents).to eq 0

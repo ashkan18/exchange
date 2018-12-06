@@ -4,12 +4,12 @@ require 'support/gravity_helper'
 describe Api::GraphqlController, type: :request do
   describe 'add_initial_offer_to_order mutation' do
     include_context 'GraphQL Client'
-    let(:partner_id) { jwt_partner_ids.first }
+    let(:seller_id) { jwt_partner_ids.first }
     let(:user_id) { jwt_user_id }
     let(:mode) { Order::OFFER }
     let(:state) { Order::PENDING }
     let(:state_reason) { nil }
-    let(:order) { Fabricate(:order, seller_id: partner_id, buyer_id: user_id, mode: mode, state: state, state_reason: state_reason) }
+    let(:order) { Fabricate(:order, seller_id: seller_id, buyer_id: user_id, mode: mode, state: state, state_reason: state_reason) }
     let!(:line_item) { Fabricate(:line_item, order: order, list_price_cents: 200, quantity: 2) }
     let(:order_id) { order.id.to_s }
     let(:amount_cents) { 500 }

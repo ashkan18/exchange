@@ -3,10 +3,10 @@ require 'rails_helper'
 describe Api::GraphqlController, type: :request do
   describe 'fulfill_at_once mutation' do
     include_context 'GraphQL Client'
-    let(:partner_id) { jwt_partner_ids.first }
+    let(:seller_id) { jwt_partner_ids.first }
     let(:user_id) { jwt_user_id }
     let(:credit_card_id) { 'cc-1' }
-    let(:order) { Fabricate(:order, seller_id: partner_id, buyer_id: user_id) }
+    let(:order) { Fabricate(:order, seller_id: seller_id, buyer_id: user_id) }
     let!(:line_items) do
       Array.new(2) { Fabricate(:line_item, order: order, list_price_cents: 200) }
     end
@@ -74,7 +74,7 @@ describe Api::GraphqlController, type: :request do
       }
     end
     context 'with user without permission to this partner' do
-      let(:partner_id) { 'another-partner-id' }
+      let(:seller_id) { 'another-partner-id' }
       it 'returns permission error' do
         response = client.execute(mutation, fulfill_at_once_input)
         expect(response.data.fulfill_at_once.order_or_error.error.type).to eq 'validation'

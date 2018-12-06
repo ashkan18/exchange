@@ -6,7 +6,7 @@ describe Api::GraphqlController, type: :request do
   include_context 'use stripe mock'
   describe 'submit_order mutation' do
     include_context 'GraphQL Client'
-    let(:partner_id) { jwt_partner_ids.first }
+    let(:seller_id) { jwt_partner_ids.first }
     let(:partner) { { effective_commission_rate: 0.1 } }
     let(:user_id) { jwt_user_id }
     let(:credit_card_id) { 'cc-1' }
@@ -15,7 +15,7 @@ describe Api::GraphqlController, type: :request do
     let(:order) do
       Fabricate(
         :order,
-        seller_id: partner_id,
+        seller_id: seller_id,
         buyer_id: user_id,
         credit_card_id: credit_card_id,
         shipping_name: 'Fname Lname',
@@ -145,7 +145,7 @@ describe Api::GraphqlController, type: :request do
           expect(GravityService).not_to receive(:deduct_inventory)
           expect(GravityService).not_to receive(:get_merchant_account)
           expect(GravityService).not_to receive(:get_credit_card)
-          expect(Adapters::GravityV1).not_to receive(:get).with("/partner/#{partner_id}/all")
+          expect(Adapters::GravityV1).not_to receive(:get).with("/partner/#{seller_id}/all")
           response = client.execute(mutation, submit_order_input)
           expect(response.data.submit_order.order_or_error).not_to respond_to(:order)
           expect(response.data.submit_order.order_or_error.error.code).to eq 'artwork_version_mismatch'
@@ -159,7 +159,7 @@ describe Api::GraphqlController, type: :request do
         expect(GravityService).to receive(:get_merchant_account).and_return(merchant_account)
         expect(GravityService).to receive(:get_credit_card).and_return(credit_card)
         allow(GravityService).to receive(:get_artwork).and_return(artwork)
-        expect(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/all").and_return(gravity_v1_partner)
+        expect(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/all").and_return(gravity_v1_partner)
         response = client.execute(mutation, submit_order_input)
 
         expect(inventory_request).to have_been_requested

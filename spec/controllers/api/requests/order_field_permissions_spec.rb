@@ -3,12 +3,12 @@ require 'rails_helper'
 describe Api::GraphqlController, type: :request do
   describe 'order query field permissions' do
     include_context 'GraphQL Client'
-    let(:partner_id) { 'partner-1' }
+    let(:seller_id) { 'partner-1' }
     let(:user_id) { 'user-i' }
     let!(:order) do
       Fabricate(
         :order,
-        seller_id: partner_id,
+        seller_id: seller_id,
         buyer_id: user_id,
         updated_at: 1.day.ago,
         shipping_total_cents: 100_00,
@@ -60,7 +60,7 @@ describe Api::GraphqlController, type: :request do
 
     context 'as seller' do
       let(:jwt_user_id) { 'gallery-person-1' }
-      let(:jwt_partner_ids) { [partner_id] }
+      let(:jwt_partner_ids) { [seller_id] }
       let(:order_query_with_buyer_fields) do
         <<-GRAPHQL
           query($id: ID!) {

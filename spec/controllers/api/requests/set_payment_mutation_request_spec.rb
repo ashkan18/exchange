@@ -3,11 +3,11 @@ require 'rails_helper'
 describe Api::GraphqlController, type: :request do
   describe 'set_payment mutation' do
     include_context 'GraphQL Client'
-    let(:partner_id) { jwt_partner_ids.first }
+    let(:seller_id) { jwt_partner_ids.first }
     let(:user_id) { jwt_user_id }
     let(:credit_card_id) { 'gravity-cc-1' }
     let(:credit_card) { { id: credit_card_id, user: { _id: user_id } } }
-    let(:order) { Fabricate(:order, seller_id: partner_id, buyer_id: user_id) }
+    let(:order) { Fabricate(:order, seller_id: seller_id, buyer_id: user_id) }
 
     let(:mutation) do
       <<-GRAPHQL

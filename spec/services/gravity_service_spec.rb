@@ -2,22 +2,22 @@ require 'rails_helper'
 require 'support/gravity_helper'
 
 describe GravityService, type: :services do
-  let(:partner_id) { 'partner-1' }
+  let(:seller_id) { 'partner-1' }
   let(:partner) { { _id: 'partner-1', billing_location_id: 'location-1' } }
   describe '#fetch_partner' do
     it 'calls the /partner endpoint' do
-      allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/all")
-      GravityService.fetch_partner(partner_id)
-      expect(Adapters::GravityV1).to have_received(:get).with("/partner/#{partner_id}/all")
+      allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/all")
+      GravityService.fetch_partner(seller_id)
+      expect(Adapters::GravityV1).to have_received(:get).with("/partner/#{seller_id}/all")
     end
 
     context 'with failed gravity call' do
       before do
-        stub_request(:get, %r{partner\/#{partner_id}}).to_return(status: 404, body: { error: 'not found' }.to_json)
+        stub_request(:get, %r{partner\/#{seller_id}}).to_return(status: 404, body: { error: 'not found' }.to_json)
       end
       it 'raises error' do
         expect do
-          GravityService.fetch_partner(partner_id)
+          GravityService.fetch_partner(seller_id)
         end.to raise_error do |error|
           expect(error).to be_a Errors::ValidationError
           expect(error.code).to eq :unknown_partner
@@ -30,25 +30,25 @@ describe GravityService, type: :services do
     let(:valid_locations) { [{ country: 'US', state: 'NY', postal_code: '12345' }, { country: 'US', state: 'FL', postal_code: '67890' }] }
     let(:invalid_location) { [{ country: 'US', state: 'Floridada' }] }
     it 'calls the correct location Gravity endpoint' do
-      expect(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/locations?private=true").and_return(valid_locations)
-      GravityService.fetch_partner_locations(partner_id)
+      expect(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/locations?private=true").and_return(valid_locations)
+      GravityService.fetch_partner_locations(seller_id)
     end
     context 'with at least one partner location' do
       context 'with valid partner locations' do
         it 'returns new addresses for each location' do
-          allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/locations?private=true").and_return(valid_locations)
-          partner_addresses = GravityService.fetch_partner_locations(partner_id)
+          allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/locations?private=true").and_return(valid_locations)
+          partner_addresses = GravityService.fetch_partner_locations(seller_id)
           partner_addresses.each { |ad| expect(ad).to be_a Address }
         end
       end
     end
     context 'with no partner locations' do
       it 'raises error' do
-        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/locations?private=true").and_return([])
-        expect { GravityService.fetch_partner_locations(partner_id) }.to raise_error do |error|
+        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/locations?private=true").and_return([])
+        expect { GravityService.fetch_partner_locations(seller_id) }.to raise_error do |error|
           expect(error).to be_a Errors::ValidationError
           expect(error.code).to eq :missing_partner_location
-          expect(error.data[:partner_id]).to eq partner_id
+          expect(error.data[:partner_id]).to eq seller_id
         end
       end
     end
@@ -58,21 +58,21 @@ describe GravityService, type: :services do
     let(:partner_merchant_accounts) { [{ external_id: 'ma-1' }, { external_id: 'some_account' }] }
     context 'with merchant account' do
       before do
-        allow(Adapters::GravityV1).to receive(:get).with('/merchant_accounts', params: { partner_id: partner_id }).and_return(partner_merchant_accounts)
+        allow(Adapters::GravityV1).to receive(:get).with('/merchant_accounts', params: { partner_id: seller_id }).and_return(partner_merchant_accounts)
       end
       it 'calls the /merchant_accounts Gravity endpoint' do
-        GravityService.get_merchant_account(partner_id)
-        expect(Adapters::GravityV1).to have_received(:get).with('/merchant_accounts', params: { partner_id: partner_id })
+        GravityService.get_merchant_account(seller_id)
+        expect(Adapters::GravityV1).to have_received(:get).with('/merchant_accounts', params: { partner_id: seller_id })
       end
       it "returns the first merchant account of the partner's merchant accounts" do
-        result = GravityService.get_merchant_account(partner_id)
+        result = GravityService.get_merchant_account(seller_id)
         expect(result).to be(partner_merchant_accounts.first)
       end
     end
 
     it 'raises an error if the partner does not have a merchant account' do
-      allow(Adapters::GravityV1).to receive(:get).with('/merchant_accounts', params: { partner_id: partner_id }).and_return([])
-      expect { GravityService.get_merchant_account(partner_id) }.to raise_error do |error|
+      allow(Adapters::GravityV1).to receive(:get).with('/merchant_accounts', params: { partner_id: seller_id }).and_return([])
+      expect { GravityService.get_merchant_account(seller_id) }.to raise_error do |error|
         expect(error).to be_a(Errors::InternalError)
         expect(error.type).to eq :internal
         expect(error.code).to eq :gravity
@@ -81,11 +81,11 @@ describe GravityService, type: :services do
 
     context 'with failed gravity call' do
       before do
-        stub_request(:get, /merchant_accounts\?partner_id=#{partner_id}/).to_return(status: 404, body: { error: 'not found' }.to_json)
+        stub_request(:get, /merchant_accounts\?partner_id=#{seller_id}/).to_return(status: 404, body: { error: 'not found' }.to_json)
       end
       it 'raises error' do
         expect do
-          GravityService.get_merchant_account(partner_id)
+          GravityService.get_merchant_account(seller_id)
         end.to raise_error do |error|
           expect(error).to be_a Errors::ValidationError
           expect(error.code).to eq :missing_merchant_account

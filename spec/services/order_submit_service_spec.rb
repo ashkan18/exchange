@@ -4,13 +4,13 @@ require 'support/gravity_helper'
 describe OrderSubmitService, type: :services do
   include_context 'use stripe mock'
 
-  let(:partner_id) { 'partner-1' }
+  let(:seller_id) { 'partner-1' }
   let(:credit_card_id) { 'cc-1' }
   let(:user_id) { 'dr-collector' }
   let(:order) do
     Fabricate(
       :order,
-      seller_id: partner_id,
+      seller_id: seller_id,
       credit_card_id: credit_card_id,
       fulfillment_type: Order::PICKUP
     )
@@ -43,11 +43,11 @@ describe OrderSubmitService, type: :services do
   describe '#process!' do
     context 'with a partner with a merchant account' do
       before do
-        allow(GravityService).to receive(:get_merchant_account).with(partner_id).and_return(partner_merchant_accounts.first)
+        allow(GravityService).to receive(:get_merchant_account).with(seller_id).and_return(partner_merchant_accounts.first)
         allow(GravityService).to receive(:get_credit_card).with(credit_card_id).and_return(credit_card)
         allow(GravityService).to receive(:get_artwork).with(artwork1[:_id]).and_return(artwork1)
         allow(GravityService).to receive(:get_artwork).with(artwork2[:_id]).and_return(artwork2)
-        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/all").and_return(gravity_v1_partner)
+        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/all").and_return(gravity_v1_partner)
       end
       context 'with failed artwork inventory deduct' do
         let(:artwork_inventory_deduct_request) { stub_request(:put, "#{Rails.application.config_for(:gravity)['api_v1_root']}/artwork/a-1/inventory").with(body: { deduct: 1 }).to_return(status: 400, body: { message: 'could not deduct' }.to_json) }
@@ -157,7 +157,7 @@ describe OrderSubmitService, type: :services do
           artwork_inventory_undeduct_request
           edition_set_inventory_undeduct_request
           StripeMock.prepare_card_error(:card_declined, :new_charge)
-          allow(GravityService).to receive(:get_merchant_account).with(partner_id).and_return(partner_merchant_accounts.first)
+          allow(GravityService).to receive(:get_merchant_account).with(seller_id).and_return(partner_merchant_accounts.first)
           allow(GravityService).to receive(:get_credit_card).with(credit_card_id).and_return(credit_card)
           expect(PostOrderNotificationJob).not_to receive(:perform_later)
           expect(OrderFollowUpJob).not_to receive(:perform_later)
@@ -194,7 +194,7 @@ describe OrderSubmitService, type: :services do
         let(:order) do
           Fabricate(
             :order,
-            seller_id: partner_id,
+            seller_id: seller_id,
             seller_type: seller_type,
             credit_card_id: credit_card_id,
             fulfillment_type: Order::PICKUP,

@@ -3,14 +3,14 @@ require 'rails_helper'
 describe Api::GraphqlController, type: :request do
   describe 'order deprecated fields' do
     include_context 'GraphQL Client'
-    let(:partner_id) { jwt_partner_ids.first }
+    let(:seller_id) { jwt_partner_ids.first }
     let(:buyer_id) { jwt_user_id }
     let(:seller_id) { 'user2' }
     let!(:order) do
       Fabricate(
         :order,
         mode: Order::OFFER,
-        seller_id: partner_id,
+        seller_id: seller_id,
         seller_type: 'partner',
         buyer_id: buyer_id,
         buyer_type: 'user',

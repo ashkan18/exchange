@@ -4,15 +4,15 @@ require 'support/gravity_helper'
 describe CommitOrderService, type: :services do
   include_context 'use stripe mock'
 
-  let(:partner_id) { 'partner-1' }
-  let(:partner) { { id: partner_id, effective_commission_rate: 0.01 } }
-  let(:partner_missing_commission_rate) { { id: partner_id, effective_commission_rate: nil } }
+  let(:seller_id) { 'partner-1' }
+  let(:partner) { { id: seller_id, effective_commission_rate: 0.01 } }
+  let(:partner_missing_commission_rate) { { id: seller_id, effective_commission_rate: nil } }
   let(:credit_card_id) { 'cc-1' }
   let(:user_id) { 'dr-collector' }
   let(:order) do
     Fabricate(
       :order,
-      seller_id: partner_id,
+      seller_id: seller_id,
       credit_card_id: credit_card_id,
       fulfillment_type: Order::PICKUP
     )
@@ -60,7 +60,7 @@ describe CommitOrderService, type: :services do
         allow(GravityService).to receive(:get_credit_card).and_return(credit_card)
         allow(GravityService).to receive(:get_artwork).and_return(artwork1)
         allow(GravityService).to receive(:get_artwork).and_return(artwork2)
-        expect(GravityService).to receive(:fetch_partner).with(partner_id).and_return(partner)
+        expect(GravityService).to receive(:fetch_partner).with(seller_id).and_return(partner)
         service.send(:pre_process!)
         expect(order.reload.commission_rate).to eq partner[:effective_commission_rate]
       end
@@ -74,7 +74,7 @@ describe CommitOrderService, type: :services do
         expect { service.send(:validate_commission_rate!) }.to raise_error do |error|
           expect(error).to be_a(Errors::ValidationError)
           expect(error.code).to eq :missing_commission_rate
-          expect(error.data).to match(partner_id: partner_id)
+          expect(error.data).to match(partner_id: seller_id)
         end
       end
     end

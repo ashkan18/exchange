@@ -5,7 +5,7 @@ describe Api::GraphqlController, type: :request do
   describe 'submit order with offer' do
     include_context 'GraphQL Client'
 
-    let(:partner_id) { jwt_partner_ids.first }
+    let(:seller_id) { jwt_partner_ids.first }
     let(:user_id) { jwt_user_id }
     let(:artwork) { { _id: 'a-1', current_version_id: '1' } }
     let(:line_item_artwork_version) { artwork[:current_version_id] }
@@ -16,7 +16,7 @@ describe Api::GraphqlController, type: :request do
       Fabricate(
         :order,
         mode: Order::OFFER,
-        seller_id: partner_id,
+        seller_id: seller_id,
         buyer_id: user_id,
         credit_card_id: credit_card_id,
         shipping_name: 'Fname Lname',
@@ -90,7 +90,7 @@ describe Api::GraphqlController, type: :request do
       it 'if the order is not in a pending state' do
         allow(GravityService).to receive(:get_artwork).with(artwork[:_id]).and_return(artwork)
         allow(GravityService).to receive(:get_credit_card).with(credit_card_id).and_return(credit_card)
-        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/all").and_return(gravity_v1_partner)
+        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/all").and_return(gravity_v1_partner)
         order.update!(state: 'abandoned')
 
         response = client.execute(mutation, submit_order_input)
@@ -152,7 +152,7 @@ describe Api::GraphqlController, type: :request do
       before do
         allow(GravityService).to receive(:get_artwork).with(artwork[:_id]).and_return(artwork)
         allow(GravityService).to receive(:get_credit_card).with(credit_card_id).and_return(credit_card)
-        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/all").and_return(gravity_v1_partner)
+        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/all").and_return(gravity_v1_partner)
       end
 
       it 'submits the order and updates submitted_at on the offer' do

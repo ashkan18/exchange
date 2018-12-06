@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 describe TransactionEvent, type: :events do
-  let(:partner_id) { 'partner-1' }
+  let(:seller_id) { 'partner-1' }
   let(:user_id) { 'user-1' }
   let(:shipping_info) do
     {
@@ -20,7 +20,7 @@ describe TransactionEvent, type: :events do
               buyer_id: user_id,
               buyer_type: Order::USER,
               buyer_phone_number: '00123459876',
-              seller_id: partner_id,
+              seller_id: seller_id,
               seller_type: 'gallery',
               currency_code: 'usd',
               shipping_total_cents: 50,
@@ -85,7 +85,7 @@ describe TransactionEvent, type: :events do
       expect(event.properties[:order][:buyer_id]).to eq user_id
       expect(event.properties[:order][:buyer_type]).to eq Order::USER
       expect(event.properties[:order][:fulfillment_type]).to eq Order::SHIP
-      expect(event.properties[:order][:seller_id]).to eq partner_id
+      expect(event.properties[:order][:seller_id]).to eq seller_id
       expect(event.properties[:order][:seller_type]).to eq 'gallery'
       expect(event.properties[:order][:items_total_cents]).to eq 300
       expect(event.properties[:order][:updated_at]).not_to be_nil

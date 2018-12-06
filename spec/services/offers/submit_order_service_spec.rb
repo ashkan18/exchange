@@ -3,7 +3,7 @@ require 'support/gravity_helper'
 
 describe Offers::SubmitOrderService, type: :services do
   let(:user_id) { 'user-id' }
-  let(:partner_id) { 'partner-1' }
+  let(:seller_id) { 'partner-1' }
   let(:order_mode) { Order::OFFER }
   let(:order_state) { Order::PENDING }
   let(:offer_submitted_at) { nil }
@@ -23,7 +23,7 @@ describe Offers::SubmitOrderService, type: :services do
   let(:line_item_artwork_version) { artwork[:current_version_id] }
   let(:credit_card_id) { 'grav_c_id1' }
   let(:credit_card) { { external_id: 'cc-1', customer_account: { external_id: 'cus-1' }, deactivated_at: nil } }
-  let(:order) { Fabricate(:order, seller_id: partner_id, mode: order_mode, state: order_state, credit_card_id: credit_card_id, **shipping_info) }
+  let(:order) { Fabricate(:order, seller_id: seller_id, mode: order_mode, state: order_state, credit_card_id: credit_card_id, **shipping_info) }
   let!(:offer) { Fabricate(:offer, order: order, submitted_at: offer_submitted_at, amount_cents: 1000_00, tax_total_cents: 20_00, shipping_total_cents: 30_00) }
   let!(:line_item) { Fabricate(:line_item, order: order, list_price_cents: 2000_00, artwork_id: artwork[:_id], artwork_version_id: line_item_artwork_version, quantity: 2) }
   let(:service) { described_class.new(offer, user_id: user_id) }
@@ -94,7 +94,7 @@ describe Offers::SubmitOrderService, type: :services do
           before do
             allow(GravityService).to receive(:get_artwork).with(artwork[:_id]).and_return(artwork)
             allow(GravityService).to receive(:get_credit_card).with(credit_card_id).and_return(credit_card)
-            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/all").and_return(gravity_v1_partner)
+            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/all").and_return(gravity_v1_partner)
           end
           it 'raises cant_submit error' do
             expect { service.process! }.to raise_error do |e|
@@ -152,7 +152,7 @@ describe Offers::SubmitOrderService, type: :services do
         order.update!(last_offer: offer)
         allow(GravityService).to receive(:get_artwork).with(artwork[:_id]).and_return(artwork)
         allow(GravityService).to receive(:get_credit_card).with(credit_card_id).and_return(credit_card)
-        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/all").and_return(gravity_v1_partner)
+        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/all").and_return(gravity_v1_partner)
         expect(Exchange).to receive_message_chain(:dogstatsd, :increment).with('order.submit')
         expect(PostOrderNotificationJob).to receive(:perform_later).once.with(order.id, Order::SUBMITTED, user_id)
       end

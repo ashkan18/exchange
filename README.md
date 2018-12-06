@@ -70,7 +70,9 @@ rake graphql:schema:idl
 ```shell
 mv schema.graphql exchange.graphql
 ```
-3) copy file above to your local update Metaphysics under `src/data` and make a PR to Metaphysics with this change
+3) copy file above to your local update Metaphysics under `src/data` and make a PR to Metaphysics with this change. 
+
+There is a guide on how to add exchange operations to Metaphysics [here](https://github.com/artsy/metaphysics/blob/master/docs/create_exchange_operations.md)
 
 
 ## Talking to Exchange 🤑

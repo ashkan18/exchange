@@ -6,7 +6,7 @@ describe Api::GraphqlController, type: :request do
     include_context 'GraphQL Client'
     let(:artwork_id) { 'artwork-id' }
     let(:edition_set_id) { 'edition-set-id' }
-    let(:partner_id) { 'gravity-partner-id' }
+    let(:seller_id) { 'gravity-partner-id' }
     let(:quantity) { 2 }
     let(:mutation_input) do
       {
@@ -95,7 +95,7 @@ describe Api::GraphqlController, type: :request do
                 order = Order.find(order_id)
                 expect(order.currency_code).to eq 'USD'
                 expect(order.buyer_id).to eq jwt_user_id
-                expect(order.seller_id).to eq partner_id
+                expect(order.seller_id).to eq seller_id
                 expect(order.seller_type).to eq 'gallery'
                 expect(order.line_items.count).to eq 1
                 expect(order.line_items.first.list_price_cents).to eq 4200_42
@@ -116,7 +116,7 @@ describe Api::GraphqlController, type: :request do
                 order = Order.find(order_id)
                 expect(order.currency_code).to eq 'USD'
                 expect(order.buyer_id).to eq jwt_user_id
-                expect(order.seller_id).to eq partner_id
+                expect(order.seller_id).to eq seller_id
                 expect(order.line_items.count).to eq 1
                 expect(order.line_items.first.list_price_cents).to eq 4200_42
                 expect(order.line_items.first.artwork_id).to eq 'artwork-id'
@@ -176,7 +176,7 @@ describe Api::GraphqlController, type: :request do
                 expect(order.mode).to eq Order::OFFER
                 expect(order.currency_code).to eq 'USD'
                 expect(order.buyer_id).to eq jwt_user_id
-                expect(order.seller_id).to eq partner_id
+                expect(order.seller_id).to eq seller_id
                 expect(order.line_items.count).to eq 1
                 expect(order.line_items.first.list_price_cents).to eq 4200_42
                 expect(order.line_items.first.artwork_id).to eq 'artwork-id'
@@ -199,7 +199,7 @@ describe Api::GraphqlController, type: :request do
               expect(order.mode).to eq Order::OFFER
               expect(order.currency_code).to eq 'USD'
               expect(order.buyer_id).to eq jwt_user_id
-              expect(order.seller_id).to eq partner_id
+              expect(order.seller_id).to eq seller_id
               expect(order.line_items.count).to eq 1
               expect(order.line_items.first.list_price_cents).to eq 5400_12
               expect(order.line_items.first.artwork_id).to eq 'artwork-id'
@@ -221,7 +221,7 @@ describe Api::GraphqlController, type: :request do
               expect(order.mode).to eq Order::OFFER
               expect(order.currency_code).to eq 'USD'
               expect(order.buyer_id).to eq jwt_user_id
-              expect(order.seller_id).to eq partner_id
+              expect(order.seller_id).to eq seller_id
               expect(order.line_items.count).to eq 1
               expect(order.line_items.first.list_price_cents).to eq 5400_12
               expect(order.line_items.first.artwork_id).to eq 'artwork-id'
@@ -241,7 +241,7 @@ describe Api::GraphqlController, type: :request do
                 expect(order.mode).to eq Order::OFFER
                 expect(order.currency_code).to eq 'USD'
                 expect(order.buyer_id).to eq jwt_user_id
-                expect(order.seller_id).to eq partner_id
+                expect(order.seller_id).to eq seller_id
                 expect(order.line_items.count).to eq 1
                 expect(order.line_items.first.list_price_cents).to eq 5400_12
                 expect(order.line_items.first.artwork_id).to eq 'artwork-id'

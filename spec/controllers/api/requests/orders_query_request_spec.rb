@@ -7,14 +7,14 @@ end
 describe Api::GraphqlController, type: :request do
   describe 'orders query' do
     include_context 'GraphQL Client'
-    let(:partner_id) { jwt_partner_ids.first }
-    let(:second_partner_id) { 'partner-2' }
+    let(:seller_id) { jwt_partner_ids.first }
+    let(:second_seller_id) { 'partner-2' }
     let(:user_id) { jwt_user_id }
     let(:second_user) { 'user2' }
-    let!(:user1_order1) { Fabricate(:order, seller_type: 'partner', seller_id: partner_id, buyer_type: 'user', buyer_id: user_id, updated_at: 3.days.ago) }
-    let!(:user1_order2) { Fabricate(:order, seller_type: 'partner', seller_id: second_partner_id, buyer_type: 'user', buyer_id: user_id, updated_at: 2.days.ago) }
-    let!(:user1_offer_order1) { Fabricate(:order, seller_type: 'partner', seller_id: second_partner_id, buyer_type: 'user', buyer_id: user_id, updated_at: 1.day.ago, mode: Order::OFFER) }
-    let!(:user2_order1) { Fabricate(:order, seller_type: 'partner', seller_id: partner_id, buyer_type: 'user', buyer_id: second_user) }
+    let!(:user1_order1) { Fabricate(:order, seller_type: 'partner', seller_id: seller_id, buyer_type: 'user', buyer_id: user_id, updated_at: 3.days.ago) }
+    let!(:user1_order2) { Fabricate(:order, seller_type: 'partner', seller_id: second_seller_id, buyer_type: 'user', buyer_id: user_id, updated_at: 2.days.ago) }
+    let!(:user1_offer_order1) { Fabricate(:order, seller_type: 'partner', seller_id: second_seller_id, buyer_type: 'user', buyer_id: user_id, updated_at: 1.day.ago, mode: Order::OFFER) }
+    let!(:user2_order1) { Fabricate(:order, seller_type: 'partner', seller_id: seller_id, buyer_type: 'user', buyer_id: second_user) }
 
     let(:query) do
       <<-GRAPHQL
@@ -80,7 +80,7 @@ describe Api::GraphqlController, type: :request do
         end
       end
       it 'returns partners orders' do
-        result = client.execute(query, sellerId: partner_id)
+        result = client.execute(query, sellerId: seller_id)
         expect(result.data.orders.edges.count).to eq 2
         ids = ids_from_result_data(result)
         expect(ids).to match_array([user1_order1.id, user2_order1.id])
@@ -182,10 +182,10 @@ describe Api::GraphqlController, type: :request do
         GRAPHQL
       end
       before do
-        Fabricate.times(10, :order, seller_type: 'partner', seller_id: partner_id)
+        Fabricate.times(10, :order, seller_type: 'partner', seller_id: seller_id)
       end
       it 'returns proper total count' do
-        results = client.execute(query_with_total_count, sellerId: partner_id)
+        results = client.execute(query_with_total_count, sellerId: seller_id)
         expect(results.data.orders.total_count).to eq 12
         expect(results.data.orders.edges.count).to eq 2
       end

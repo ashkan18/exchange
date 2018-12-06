@@ -7,7 +7,7 @@ class OrderCancellationService
 
   def seller_lapse!
     @order.seller_lapse! do
-      process_refund
+      process_refund if @order.mode == Order::BUY
     end
     PostOrderNotificationJob.perform_later(@order.id, Order::CANCELED)
   ensure
@@ -16,7 +16,7 @@ class OrderCancellationService
 
   def reject!
     @order.reject! do
-      process_refund
+      process_refund if @order.mode == Order::BUY
     end
     PostOrderNotificationJob.perform_later(@order.id, Order::CANCELED, @user_id)
   ensure

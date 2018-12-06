@@ -5,9 +5,9 @@ require 'support/taxjar_helper'
 describe Api::GraphqlController, type: :request do
   describe 'set_shipping mutation on order with pending offer' do
     include_context 'GraphQL Client'
-    let(:partner_id) { jwt_partner_ids.first }
+    let(:seller_id) { jwt_partner_ids.first }
     let(:user_id) { jwt_user_id }
-    let(:order) { Fabricate(:order, seller_id: partner_id, buyer_id: user_id, mode: Order::OFFER) }
+    let(:order) { Fabricate(:order, seller_id: seller_id, buyer_id: user_id, mode: Order::OFFER) }
     let!(:offer) { Fabricate(:offer, order: order, amount_cents: 300_00, submitted_at: nil, creator_id: user_id) }
     let!(:line_item) { Fabricate(:line_item, order: order, artwork_id: 'a-1', quantity: 2) }
     let(:artwork1) { gravity_v1_artwork(_id: 'a-1', domestic_shipping_fee_cents: 200_00, international_shipping_fee_cents: 300_00) }
@@ -157,7 +157,7 @@ describe Api::GraphqlController, type: :request do
         context 'with no partner locations' do
           before do
             allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-1').and_return(artwork1)
-            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/locations?private=true").and_return([])
+            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/locations?private=true").and_return([])
           end
           it 'raises an error' do
             response = client.execute(mutation, set_shipping_input)
@@ -169,7 +169,7 @@ describe Api::GraphqlController, type: :request do
         context 'with untaxable partner locations' do
           before do
             allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-1').and_return(artwork1)
-            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/locations?private=true").and_return([{ country: 'FR' }])
+            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/locations?private=true").and_return([{ country: 'FR' }])
           end
           it 'sets sales tax to 0 and should_remit_sales_tax to false on each line item' do
             client.execute(mutation, set_shipping_input)
@@ -182,7 +182,7 @@ describe Api::GraphqlController, type: :request do
           let(:shipping_country) { 'ASDF' }
           before do
             allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-1').and_return(artwork1)
-            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/locations?private=true").and_return([{ country: 'FR' }])
+            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/locations?private=true").and_return([{ country: 'FR' }])
           end
           it 'returns proper error' do
             response = client.execute(mutation, set_shipping_input)
@@ -195,7 +195,7 @@ describe Api::GraphqlController, type: :request do
         context 'with a US-based shipping address' do
           before do
             allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-1').and_return(artwork1)
-            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{partner_id}/locations?private=true").and_return([{ country: 'US', state: 'NY' }])
+            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/locations?private=true").and_return([{ country: 'US', state: 'NY' }])
           end
           let(:shipping_country) { 'US' }
           context 'without a state' do
