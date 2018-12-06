@@ -1,21 +1,22 @@
 require 'rails_helper'
+require 'support/gravity_helper'
 
 describe Offers::SubmitCounterOfferService, type: :services do
   describe '#process!' do
     let(:offer_from_id) { 'user-id' }
-    let(:order) { Fabricate(:order, state: Order::SUBMITTED) }
+    let(:order_seller_id) { 'partner-1' }
+    let(:order) { Fabricate(:order, state: Order::SUBMITTED, seller_id: order_seller_id) }
+    let!(:line_item) { Fabricate(:line_item, order: order) }
     let(:offer) { Fabricate(:offer, order: order, amount_cents: 10000, submitted_at: 1.day.ago) }
     let(:pending_offer) { Fabricate(:offer, order: order, amount_cents: 20000, responds_to: offer, from_id: offer_from_id) }
-    let(:service) { Offers::SubmitCounterOfferService.new(pending_offer: pending_offer, from_id: offer_from_id) }
-    let(:offer_totol_updater_service) { double }
+    let(:service) { Offers::SubmitCounterOfferService.new(pending_offer, user_id: offer_from_id) }
+    let(:offer_total_updater_service) { double }
 
     before do
       # last_offer is set in Orders::InitialOffer. "Stubbing" out the
       # dependent behavior of this class to by setting last_offer directly
       order.update!(last_offer: offer)
-
-      allow(Offers::OfferTotalUpdaterService).to receive(:new).with(offer: instance_of(Offer)).and_return(offer_totol_updater_service)
-      allow(offer_totol_updater_service).to receive(:process!)
+      allow(Adapters::GravityV1).to receive(:get).with("/partner/#{order_seller_id}/all").and_return(gravity_v1_partner)
     end
 
     context 'with a submitted offer' do
@@ -28,7 +29,7 @@ describe Offers::SubmitCounterOfferService, type: :services do
         expect(pending_offer.submitted_at).not_to be_nil
       end
 
-      it 'instruments an rejected offer' do
+      it 'instruments a counter offer' do
         dd_statsd = stub_ddstatsd_instance
         allow(dd_statsd).to receive(:increment).with('offer.counter')
 

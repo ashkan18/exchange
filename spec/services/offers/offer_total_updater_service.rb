@@ -34,7 +34,7 @@ describe Offers::OfferTotalUpdaterService, type: :services do
     let(:offer_tax) { 100 }
     let(:remit_tax) { false }
     let(:tax_calculator_service) { double }
-    let(:service) { Offers::OfferTotalUpdaterService.new(offer: offer) }
+    let(:service) { Offers::OfferTotalUpdaterService.new(offer) }
 
     before do
       allow(Tax::CalculatorService).to receive(:new).with(

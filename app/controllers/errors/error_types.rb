@@ -4,6 +4,7 @@ module Errors
       cant_offer
       cant_submit
       cannot_accept_offer
+      cannot_counter
       credit_card_deactivated
       credit_card_missing_customer
       credit_card_missing_external_id

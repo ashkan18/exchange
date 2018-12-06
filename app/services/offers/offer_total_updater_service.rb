@@ -1,6 +1,6 @@
 module Offers
   class OfferTotalUpdaterService < BaseTotalCalculatorService
-    def initialize(offer:)
+    def initialize(offer)
       @pending_offer = offer
       @order = offer.order
     end

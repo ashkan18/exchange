@@ -1,31 +1,28 @@
 module Offers
   class SubmitCounterOfferService
+    attr_reader :offer
     include OfferValidationService
-    def initialize(pending_offer:, from_id:)
-      @offer = pending_offer
+    def initialize(offer, user_id:)
+      @offer = offer
       @order = offer.order
-      @from_id = from_id
+      @user_id = user_id
     end
 
     def process!
-      validate_offer_is_mine!(offer, @from_id)
-      validate_offer_order_is_submitted!(offer)
-      validate_offer_not_submitted!(offer)
-
-      @offer.update!(submitted_at: Time.now.utc)
-      @order.update!(last_offer: @offer)
-
-      totals_service = OfferTotalUpdaterService.new(offer: @offer)
-      totals_service.process!
-
-      instrument_offer_counter
+      validate_counter_offer!
+      @order.with_lock do
+        SubmitOfferService.new(@offer).process!
+      end
+      post_process!
     end
 
     private
 
-    attr_reader :offer
+    def validate_counter_offer!
+      validate_order_submitted!(offer.order)
+    end
 
-    def instrument_offer_counter
+    def post_process!
       Exchange.dogstatsd.increment 'offer.counter'
     end
   end

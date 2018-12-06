@@ -101,6 +101,8 @@ describe Api::GraphqlController, type: :request do
       end
 
       it 'if the offer has already been submitted' do
+        allow(GravityService).to receive(:get_artwork).with(artwork[:_id]).and_return(artwork)
+        allow(GravityService).to receive(:get_credit_card).with(credit_card_id).and_return(credit_card)
         @offer.update!(submitted_at: Time.now.utc)
 
         response = client.execute(mutation, submit_order_input)

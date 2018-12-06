@@ -11,10 +11,7 @@ module Offers
     def process!
       pre_process!
       @order.submit! do
-        @offer.update!(submitted_at: Time.now.utc)
-        @order.line_items.first.update!(sales_tax_cents: @offer.tax_total_cents, should_remit_sales_tax: @offer.should_remit_sales_tax)
-        @order.update!(last_offer: @offer, shipping_total_cents: @offer.shipping_total_cents, tax_total_cents: @offer.tax_total_cents)
-        OrderTotalUpdaterService.new(@order, @partner[:effective_commission_rate]).update_totals!
+        SubmitOfferService.new(@offer).process!
       end
       post_process
     end
@@ -33,8 +30,6 @@ module Offers
       end
       @credit_card = GravityService.get_credit_card(@order.credit_card_id)
       assert_credit_card!
-      @partner = GravityService.fetch_partner(@order.seller_id)
-      assert_partner!
     end
 
     def post_process
@@ -47,17 +42,12 @@ module Offers
     def assert_can_submit!
       raise Errors::ValidationError, :cant_submit unless @order.mode == Order::OFFER
       raise Errors::ValidationError, :missing_required_info unless @order.can_commit?
-      raise Errors::ValidationError, :invalid_offer if @offer.submitted?
     end
 
     def assert_credit_card!
       raise Errors::ValidationError.new(:credit_card_missing_external_id, credit_card_id: @credit_card[:id]) if @credit_card[:external_id].blank?
       raise Errors::ValidationError.new(:credit_card_missing_customer, credit_card_id: @credit_card[:id]) if @credit_card.dig(:customer_account, :external_id).blank?
       raise Errors::ValidationError.new(:credit_card_deactivated, credit_card_id: @credit_card[:id]) unless @credit_card[:deactivated_at].nil?
-    end
-
-    def assert_partner!
-      raise Errors::ValidationError.new(:missing_commission_rate, partner_id: @partner[:id]) if @partner[:effective_commission_rate].blank?
     end
   end
 end

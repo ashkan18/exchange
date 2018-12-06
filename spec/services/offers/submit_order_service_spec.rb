@@ -36,16 +36,6 @@ describe Offers::SubmitOrderService, type: :services do
         expect(ReminderFollowUpJob).not_to receive(:perform_later)
       end
 
-      context 'with already submitted offer' do
-        let(:offer_submitted_at) { Time.now.utc }
-        it 'raises invalid_offer error' do
-          expect { service.process! }.to raise_error do |e|
-            expect(e.type).to eq :validation
-            expect(e.code).to eq :invalid_offer
-          end
-        end
-      end
-
       context 'without shipping info' do
         let(:shipping_info) { {} }
         it 'raises missing_required_info error' do

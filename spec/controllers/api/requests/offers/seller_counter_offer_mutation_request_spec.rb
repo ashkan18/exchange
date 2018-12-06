@@ -1,16 +1,17 @@
 require 'rails_helper'
 require 'support/use_stripe_mock'
+require 'support/gravity_helper'
 
 describe Api::GraphqlController, type: :request do
   describe 'seller_counter_offer mutation' do
     include_context 'GraphQL Client'
-    let(:partner_id) { jwt_partner_ids.first }
-    let(:user_id) { jwt_user_id }
+    let(:order_seller_id) { jwt_partner_ids.first }
+    let(:buyer_id) { jwt_user_id }
     let(:artwork_location) { { country: 'US' } }
     let(:artwork) { { _id: 'a-1', current_version_id: '1', location: artwork_location, domestic_shipping_fee_cents: 1000 } }
     let(:order_state) { Order::SUBMITTED }
-    let!(:order) { Fabricate(:order, state: order_state, seller_id: partner_id, buyer_id: user_id, **shipping_info) }
-    let!(:offer) { Fabricate(:offer, order: order, amount_cents: 10000) }
+    let!(:order) { Fabricate(:order, state: order_state, seller_id: order_seller_id, buyer_id: buyer_id, **shipping_info) }
+    let!(:offer) { Fabricate(:offer, order: order, amount_cents: 10000, from_id: buyer_id, from_type: Order::USER) }
     let(:line_item_artwork_version) { artwork[:current_version_id] }
     let!(:line_item) { Fabricate(:line_item, order: order, list_price_cents: 2000_00, artwork_id: artwork[:_id], artwork_version_id: line_item_artwork_version, quantity: 2) }
     let(:partner_address) do
@@ -74,7 +75,7 @@ describe Api::GraphqlController, type: :request do
     before do
       order.update!(last_offer: offer)
 
-      allow(GravityService).to receive(:fetch_partner_locations).with(partner_id).and_return([partner_address])
+      allow(GravityService).to receive(:fetch_partner_locations).with(order_seller_id).and_return([partner_address])
       allow(GravityService).to receive(:get_artwork).and_return(artwork)
       allow(Taxjar::Client).to receive(:new).with(api_key: Rails.application.config_for(:taxjar)['taxjar_api_key'], api_url: nil).and_return(taxjar_client)
       allow(taxjar_client).to receive(:tax_for_order).with(any_args).and_return(tax_response)
@@ -106,7 +107,7 @@ describe Api::GraphqlController, type: :request do
     end
 
     context 'with user without permission to this partner' do
-      let(:partner_id) { 'another-partner-id' }
+      let(:order_seller_id) { 'another-partner-id' }
 
       it 'returns permission error' do
         response = client.execute(mutation, seller_counter_offer_input)
@@ -134,7 +135,21 @@ describe Api::GraphqlController, type: :request do
       end
     end
 
+    context 'when not waiting for seller response' do
+      let!(:offer) { Fabricate(:offer, order: order, amount_cents: 10000, from_id: order_seller_id, from_type: 'gallery') }
+
+      it 'returns cannot_counter' do
+        response = client.execute(mutation, seller_counter_offer_input)
+
+        expect(response.data.seller_counter_offer.order_or_error.error.type).to eq 'validation'
+        expect(response.data.seller_counter_offer.order_or_error.error.code).to eq 'cannot_counter'
+      end
+    end
+
     context 'with proper permission' do
+      before do
+        allow(Adapters::GravityV1).to receive(:get).with("/partner/#{order_seller_id}/all").and_return(gravity_v1_partner)
+      end
       it 'counters the order' do
         expect do
           client.execute(mutation, seller_counter_offer_input)
@@ -144,8 +159,7 @@ describe Api::GraphqlController, type: :request do
           expect(order.reload.last_offer.should_remit_sales_tax).to eq(false)
           expect(order.reload.last_offer.amount_cents).to eq(10000)
           expect(order.reload.last_offer.submitted_at).not_to eq(nil)
-          # shouldn't update order amounts until offer is accepted
-          expect(order.reload.items_total_cents).to eq(0)
+          expect(order.reload.items_total_cents).to eq(400000)
         end.to change { order.reload.offers.count }.from(1).to(2)
       end
     end
