@@ -30,7 +30,7 @@ describe Api::GraphqlController, type: :request do
         state_reason: state == Order::CANCELED ? 'seller_lapsed' : nil
       )
     end
-    let!(:user2_order1) { Fabricate(:order, seller_id: second_seller_id, seller_type: 'partner', buyer_id: second_user, buyer_type: 'user') }
+    let!(:user2_order1) { Fabricate(:order, seller_id: second_seller_id, seller_type: 'gallery', buyer_id: second_user, buyer_type: 'user') }
 
     let(:query) do
       <<-GRAPHQL
@@ -265,7 +265,7 @@ describe Api::GraphqlController, type: :request do
               end
             end
           end
-          context 'withot lastOffer' do
+          context 'without lastOffer' do
             it 'returns nil' do
               user1_order1.update!(last_offer: nil)
               result = client.execute(query, id: user1_order1.id)
@@ -274,12 +274,14 @@ describe Api::GraphqlController, type: :request do
           end
           context 'last offer from seller' do
             it 'returns BUYER for awaitingResponseFrom' do
+              seller_offer.update!(submitted_at: nil)
               result = client.execute(query, id: user1_order1.id)
               expect(result.data.order.awaiting_response_from).to eq 'BUYER'
             end
           end
           context 'last offer from buyer' do
             before do
+              buyer_offer.update!(submitted_at: nil)
               user1_order1.update! last_offer: buyer_offer
             end
             it 'returns BUYER for awaitingResponseFrom' do

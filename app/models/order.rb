@@ -166,10 +166,7 @@ class Order < ApplicationRecord
   def awaiting_response_from
     return unless mode == Order::OFFER && state == Order::SUBMITTED
 
-    case last_offer&.from_participant
-    when Order::BUYER then Order::SELLER
-    when Order::SELLER then Order::BUYER
-    end
+    last_offer&.awaiting_response_from
   end
 
   private
