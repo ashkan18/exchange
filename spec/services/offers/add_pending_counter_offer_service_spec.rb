@@ -6,7 +6,7 @@ describe Offers::AddPendingCounterOfferService, type: :services do
     let(:offer_from_type) { Order::PARTNER }
     let(:order) { Fabricate(:order, state: Order::SUBMITTED) }
     let(:offer) { Fabricate(:offer, order: order, amount_cents: 10000, submitted_at: 1.day.ago) }
-    let(:service) { Offers::AddPendingCounterOfferService.new(counter_on: offer, amount_cents: 20000, from_id: offer_from_id, from_type: offer_from_type) }
+    let(:service) { Offers::AddPendingCounterOfferService.new(offer, amount_cents: 20000, from_id: offer_from_id, from_type: offer_from_type) }
     let(:offer_total_updater_service) { double }
 
     before do

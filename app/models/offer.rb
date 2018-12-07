@@ -20,4 +20,12 @@ class Offer < ApplicationRecord
       Order::BUYER
     end
   end
+
+  def awaiting_for_response_from
+    return if submitted?
+    case from_participant
+    when Order::BUYER then Order::SELLER
+    when Order::SELLER then Order::BUYER
+    end
+  end
 end

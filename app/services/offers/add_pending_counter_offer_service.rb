@@ -1,8 +1,8 @@
 module Offers
   class AddPendingCounterOfferService
     attr_reader :offer
-    include OfferValidationService
-    def initialize(counter_on:, amount_cents:, from_id:, from_type:)
+    include OrderValidator
+    def initialize(counter_on, amount_cents:, from_id:, from_type:)
       @counter_on = counter_on
       @order = counter_on.order
       @amount_cents = amount_cents

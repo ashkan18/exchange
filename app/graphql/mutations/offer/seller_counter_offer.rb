@@ -8,10 +8,9 @@ class Mutations::Offer::SellerCounterOffer < Mutations::BaseMutation
 
   def resolve(offer_id:, amount_cents:)
     offer = Offer.find(offer_id)
-    authorize_seller_request!(offer)
-    raise Errors::ValidationError, :cannot_counter unless waiting_seller_counter?(offer)
+    validate_request(offer)
 
-    add_service = Offers::AddPendingCounterOfferService.new(counter_on: offer, amount_cents: amount_cents, from_type: Order::PARTNER, from_id: context[:current_user][:id])
+    add_service = Offers::AddPendingCounterOfferService.new(offer, amount_cents: amount_cents, from_type: Order::PARTNER, from_id: context[:current_user][:id])
     add_service.process!
 
     submit_service = Offers::SubmitCounterOfferService.new(add_service.offer, user_id: context[:current_user][:id])
@@ -22,9 +21,11 @@ class Mutations::Offer::SellerCounterOffer < Mutations::BaseMutation
     { order_or_error: { error: Types::ApplicationErrorType.from_application(e) } }
   end
 
+
   private
 
-  def waiting_seller_counter?(offer)
-    offer.from_participant == Order::BUYER
+  def validate_request
+    authorize_seller_request!(offer)
+    raise Errors::ValidationError, :cannot_counter unless offer.awaiting_response_from == Order::SELLER
   end
 end

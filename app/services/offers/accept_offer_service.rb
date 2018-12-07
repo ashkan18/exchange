@@ -1,6 +1,6 @@
 module Offers
   class AcceptOfferService < CommitOrderService
-    include OfferValidationService
+    include OrderValidator
     attr_reader :order, :offer, :user_id
     def initialize(offer:, order:, user_id: nil)
       super(order, :approve, user_id)

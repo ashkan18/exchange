@@ -74,30 +74,6 @@ describe Offers::RejectOfferService, type: :services do
         expect(dd_statsd).to_not have_received(:increment)
       end
     end
-
-    context 'attempting to reject its own offer' do
-      let!(:offer) { Fabricate(:offer, order: order, from_type: Order::PARTNER) }
-
-      it 'raises a validation error' do
-        expect {  service.process! }
-          .to raise_error(Errors::ValidationError)
-      end
-
-      it 'does not reject the order' do
-        expect {  service.process! }.to raise_error(Errors::ValidationError)
-
-        expect(order.reload.state).to eq(Order::SUBMITTED)
-      end
-
-      it 'does not instrument' do
-        dd_statsd = stub_ddstatsd_instance
-        allow(dd_statsd).to receive(:increment).with('order.reject')
-
-        expect {  service.process! }.to raise_error(Errors::ValidationError)
-
-        expect(dd_statsd).to_not have_received(:increment)
-      end
-    end
   end
 
   def stub_ddstatsd_instance

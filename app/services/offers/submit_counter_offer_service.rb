@@ -1,7 +1,7 @@
 module Offers
   class SubmitCounterOfferService
     attr_reader :offer
-    include OfferValidationService
+    include OrderValidator
     def initialize(offer, user_id:)
       @offer = offer
       @order = offer.order
