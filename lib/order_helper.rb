@@ -55,6 +55,10 @@ class OrderHelper
     end
   end
 
+  def artsy_collects_sales_tax?
+    @artsy_collects_sales_tax ||= partner[:artsy_collects_sales_tax]
+  end
+
   private
 
   def order_helper

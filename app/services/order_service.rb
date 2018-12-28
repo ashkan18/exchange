@@ -9,6 +9,17 @@ module OrderService
     end
   end
 
+  def self.set_shipping!(order, fulfillment_type:, shipping:)
+    raise Errors::ValidationError, :invalid_state unless order.state == Order::PENDING
+
+    order_shipping = OrderShipping.new(order)
+    case fulfillment_type
+    when Order::PICKUP then order_shipping.pickup!
+    when Order::SHIP then order_shipping.ship!(shipping)
+    end
+    order
+  end
+
   def self.set_payment!(order, credit_card_id)
     raise Errors::ValidationError.new(:invalid_state, state: order.state) unless order.state == Order::PENDING
 

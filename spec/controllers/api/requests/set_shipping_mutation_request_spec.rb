@@ -229,6 +229,7 @@ describe Api::GraphqlController, type: :request do
 
         context 'with artwork with missing location' do
           it 'returns an error' do
+            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/locations?private=true").and_return([{ country: 'US', state: 'NY' }])
             allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-1').and_return(id: 'missing-location')
             response = client.execute(mutation, set_shipping_input)
             expect(response.data.set_shipping.order_or_error.error.type).to eq 'validation'
@@ -238,6 +239,7 @@ describe Api::GraphqlController, type: :request do
 
         context 'with failed artwork fetch call' do
           it 'returns an error' do
+            allow(Adapters::GravityV1).to receive(:get).with("/partner/#{seller_id}/locations?private=true").and_return([{ country: 'US', state: 'NY' }])
             allow(Adapters::GravityV1).to receive(:get).with('/artwork/a-1').and_raise(Adapters::GravityError.new('unknown artwork'))
             response = client.execute(mutation, set_shipping_input)
             expect(response.data.set_shipping.order_or_error.error.type).to eq 'validation'
