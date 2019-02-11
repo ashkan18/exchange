@@ -83,6 +83,8 @@ module OfferService
     OrderFollowUpJob.set(wait_until: order.state_expires_at).perform_later(order.id, order.state)
     ReminderFollowUpJob.set(wait_until: order.state_expiration_reminder_time).perform_later(order.id, order.state)
     Exchange.dogstatsd.increment 'order.approved'
+  ensure
+    order_processor.handle_transaction
   end
 
   class << self

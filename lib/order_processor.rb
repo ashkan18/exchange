@@ -36,8 +36,6 @@ class OrderProcessor
   rescue Errors::ValidationError, Errors::ProcessingError => e
     undeduct_inventory
     raise e
-  ensure
-    handle_transaction
   end
 
   def valid?
@@ -48,14 +46,15 @@ class OrderProcessor
     @error.nil?
   end
 
-  private
-
   def handle_transaction
     return if @transaction.blank?
 
     @order.transactions << @transaction
     notify_failed_charge if @transaction.failed?
   end
+
+  private
+
 
   def undeduct_inventory
     @deducted_inventory.each { |li| Gravity.undeduct_inventory(li) }
