@@ -1,5 +1,5 @@
 class Transaction < ApplicationRecord
-  has_paper_trail class_name: 'PaperTrail::TransactionVersion'
+  has_paper_trail versions: { class_name: 'PaperTrail::TransactionVersion' }
 
   belongs_to :order
 

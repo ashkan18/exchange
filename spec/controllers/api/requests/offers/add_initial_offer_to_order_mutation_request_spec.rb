@@ -120,7 +120,7 @@ describe Api::GraphqlController, type: :request do
             client.execute(mutation, input: { amountCents: 1000000 })
           end.to raise_error do |error|
             expect(error).to be_a(Graphlient::Errors::GraphQLError)
-            expect(error.message).to match(/orderId: Expected value to not be null/)
+            expect(error.message).to match(/was provided invalid value for orderId/)
           end
         end
 
@@ -129,7 +129,7 @@ describe Api::GraphqlController, type: :request do
             client.execute(mutation, input: { orderId: order_id })
           end.to raise_error do |error|
             expect(error).to be_a(Graphlient::Errors::GraphQLError)
-            expect(error.message).to match(/amountCents: Expected value to not be null/)
+            expect(error.message).to match(/was provided invalid value for amountCents/)
           end
         end
 

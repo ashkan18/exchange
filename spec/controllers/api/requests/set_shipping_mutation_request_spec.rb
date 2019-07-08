@@ -151,7 +151,7 @@ describe Api::GraphqlController, type: :request do
           it 'fails' do
             expect do
               client.execute(mutation, set_shipping_input)
-            end.to raise_error(/phoneNumber: Expected value to not be null/)
+            end.to raise_error(/was provided invalid value for shipping.phoneNumber/)
           end
         end
 

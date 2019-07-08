@@ -83,7 +83,7 @@ How to implement this pattern for future models:
   ```ruby
     # app/models/foo.rb
     class Foo < ApplicationRecord
-      has_paper_trail class_name: 'PaperTrail::FooVersion'
+      has_paper_trail versions: { class_name: 'PaperTrail::FooVersion' }
       ...
     end
   ```

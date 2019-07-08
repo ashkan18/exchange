@@ -52,7 +52,7 @@ describe PaymentService, type: :services do
       transaction = PaymentService.capture_authorized_charge(uncaptured_charge.id)
       expect(transaction.amount_cents).to eq(uncaptured_charge.amount)
       expect(transaction.transaction_type).to eq Transaction::CAPTURE
-      expect(transaction.source_id).to eq 'test_cc_2'
+      expect(transaction.source_id).to eq 'test_tok_1'
       expect(transaction.status).to eq Transaction::SUCCESS
     end
     it 'catches Stripe errors and returns a failed transaction' do

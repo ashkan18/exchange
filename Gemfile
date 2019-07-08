@@ -44,7 +44,7 @@ group :test do
   gem 'danger'
   gem 'fabrication'
   gem 'selenium-webdriver'
-  gem 'stripe-ruby-mock', '~> 2.5.4', require: 'stripe_mock'
+  gem 'stripe-ruby-mock', '~> 2.5.8', require: 'stripe_mock'
   gem 'timecop'
   gem 'webmock'
 end

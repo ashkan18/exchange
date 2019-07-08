@@ -1,6 +1,6 @@
 class Order < ApplicationRecord
   include OrderHelper
-  has_paper_trail class_name: 'PaperTrail::OrderVersion'
+  has_paper_trail versions: { class_name: 'PaperTrail::OrderVersion' }
 
   SUPPORTED_CURRENCIES = %w[USD].freeze
 

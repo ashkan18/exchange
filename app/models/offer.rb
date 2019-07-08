@@ -1,5 +1,5 @@
 class Offer < ApplicationRecord
-  has_paper_trail class_name: 'PaperTrail::OfferVersion'
+  has_paper_trail versions: { class_name: 'PaperTrail::OfferVersion' }
 
   EXPIRATION = 2.days.freeze
 

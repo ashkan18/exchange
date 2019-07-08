@@ -11,10 +11,12 @@ RSpec.shared_context 'use stripe mock' do
     )
   end
   let(:uncaptured_charge) do
+    card_token = stripe_helper.generate_card_token
     Stripe::Charge.create(
       amount: 22_222,
       currency: 'usd',
-      source: stripe_helper.generate_card_token,
+      source: card_token,
+      payment_method: card_token,
       destination: 'ma-1',
       capture: false
     )
@@ -22,10 +24,12 @@ RSpec.shared_context 'use stripe mock' do
   let(:buyer_amount) { 22_222 }
   let(:seller_amount) { 10_000 }
   let(:captured_charge) do
+    card_token = stripe_helper.generate_card_token
     Stripe::Charge.create(
       amount: buyer_amount,
       currency: 'usd',
-      source: stripe_helper.generate_card_token,
+      source: card_token,
+      payment_method: card_token,
       destination: {
         account: 'ma-1',
         amount: seller_amount
