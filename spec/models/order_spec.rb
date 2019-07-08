@@ -75,7 +75,7 @@ RSpec.describe Order, type: :model do
   describe 'update_state_timestamps' do
     it 'sets state timestamps in create' do
       expect(order.state_updated_at).not_to be_nil
-      expect(order.state_expires_at).to eq order.state_updated_at + 2.days
+      expect(order.state_expires_at).to eq order.state_updated_at + 3.days
     end
 
     it 'does not update timestamps if state did not change' do

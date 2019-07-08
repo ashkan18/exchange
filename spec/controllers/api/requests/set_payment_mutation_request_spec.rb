@@ -86,7 +86,7 @@ describe Api::GraphqlController, type: :request do
             expect(response.data.set_payment.order_or_error).not_to respond_to(:error)
             expect(order.reload.credit_card_id).to eq credit_card_id
             expect(order.state).to eq Order::PENDING
-            expect(order.state_expires_at).to eq(order.state_updated_at + 2.days)
+            expect(order.state_expires_at).to eq(order.state_updated_at + 3.days)
           end
         end
         context 'with a credit card that does not belong to the buyer' do

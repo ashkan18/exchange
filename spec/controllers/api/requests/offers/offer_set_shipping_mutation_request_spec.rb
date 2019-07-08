@@ -264,7 +264,7 @@ describe Api::GraphqlController, type: :request do
             expect(order.shipping_name).to eq 'Fname Lname'
             expect(order.shipping_address_line1).to eq '401 Broadway'
             expect(order.shipping_address_line2).to eq 'Suite 80'
-            expect(order.state_expires_at).to eq(order.state_updated_at + 2.days)
+            expect(order.state_expires_at).to eq(order.state_updated_at + 3.days)
           end
 
           it 'sets sales tax on offer' do

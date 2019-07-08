@@ -146,7 +146,7 @@ describe Api::GraphqlController, type: :request do
 
       it 'sorts by state_expires_at in ascending order' do
         user1_order1.update!(state_expires_at: 1.day.from_now)
-        user1_order2.update!(state_expires_at: 2.days.from_now)
+        user1_order2.update!(state_expires_at: 4.days.from_now)
         result = client.execute(query, buyerId: user_id, sort: 'STATE_EXPIRES_AT_ASC')
         ids = ids_from_result_data(result)
         expect(ids).to eq([user1_order1.id, user1_offer_order1.id, user1_order2.id])
@@ -154,7 +154,7 @@ describe Api::GraphqlController, type: :request do
 
       it 'sorts by state_expires_at in descending order' do
         user1_order1.update!(state_expires_at: 1.day.from_now)
-        user1_order2.update!(state_expires_at: 2.days.from_now)
+        user1_order2.update!(state_expires_at: 4.days.from_now)
         result = client.execute(query, buyerId: user_id, sort: 'STATE_EXPIRES_AT_DESC')
         ids = ids_from_result_data(result)
         expect(ids).to eq([user1_order2.id, user1_offer_order1.id, user1_order1.id])

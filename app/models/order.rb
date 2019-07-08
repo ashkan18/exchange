@@ -56,7 +56,7 @@ class Order < ApplicationRecord
   }.freeze
 
   STATE_EXPIRATIONS = {
-    'pending' => 2.days,
+    'pending' => 3.days,
     'submitted' => 2.days,
     'approved' => 7.days
   }.freeze
