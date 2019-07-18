@@ -2,8 +2,6 @@ require 'rails_helper'
 
 describe OrderApproveService, type: :services do
   include_context 'use stripe mock'
-  let(:payment_intent) { Stripe::PaymentIntent.create(amount: 200, currency: 'usd', capture_method: 'manual') }
-  let(:failed_payment_intent) { Stripe::PaymentIntent.create(amount: 3178, currency: 'usd', capture_method: 'manual') }
   let(:order) { Fabricate(:order, external_charge_id: payment_intent.id, state: Order::SUBMITTED) }
   let!(:line_items) { [Fabricate(:line_item, order: order, artwork_id: 'a-1', list_price_cents: 123_00), Fabricate(:line_item, order: order, artwork_id: 'a-2', edition_set_id: 'es-1', quantity: 2, list_price_cents: 124_00)] }
   let(:user_id) { 'user-id' }
@@ -15,8 +13,8 @@ describe OrderApproveService, type: :services do
     end
     context 'with failed stripe capture' do
       before do
-        Fabricate(:transaction, order: order, external_id: failed_payment_intent.id, external_type: Transaction::PAYMENT_INTENT)
-        order.update!(external_charge_id: failed_payment_intent.id)
+        Fabricate(:transaction, order: order, external_id: requires_payment_method_payment_intent.id, external_type: Transaction::PAYMENT_INTENT)
+        order.update!(external_charge_id: requires_payment_method_payment_intent.id)
         allow_any_instance_of(Stripe::PaymentIntent).to receive(:capture)
       end
 

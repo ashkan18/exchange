@@ -4,7 +4,6 @@ describe OrderCancellationService, type: :services do
   include_context 'use stripe mock'
   let(:order_state) { Order::SUBMITTED }
   let(:order_mode) { Order::BUY }
-  let(:payment_intent) { Stripe::PaymentIntent.create(amount: 200, currency: 'usd') }
   let(:order) { Fabricate(:order, external_charge_id: payment_intent.id, state: order_state, mode: order_mode, buyer_id: 'buyer', buyer_type: Order::USER) }
   let!(:payment_intent_transaction) { Fabricate(:transaction, order: order, external_id: payment_intent.id, external_type: Transaction::PAYMENT_INTENT) }
   let!(:line_items) { [Fabricate(:line_item, order: order, artwork_id: 'a-1', list_price_cents: 123_00), Fabricate(:line_item, order: order, artwork_id: 'a-2', edition_set_id: 'es-1', quantity: 2, list_price_cents: 124_00)] }

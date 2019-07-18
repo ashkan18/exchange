@@ -74,7 +74,6 @@ describe Api::GraphqlController, type: :request do
     end
 
     context 'with proper permission' do
-      let(:payment_intent) { Stripe::PaymentIntent.create(amount: 200, currency: 'usd') }
       let!(:payment_intent_transaction) { Fabricate(:transaction, order: order, external_id: payment_intent.id, external_type: Transaction::PAYMENT_INTENT) }
       before do
         order.update_attributes! state: Order::SUBMITTED, external_charge_id: payment_intent.id

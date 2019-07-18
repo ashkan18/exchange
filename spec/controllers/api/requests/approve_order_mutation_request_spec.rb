@@ -9,7 +9,6 @@ describe Api::GraphqlController, type: :request do
     let(:seller_id) { jwt_partner_ids.first }
     let(:user_id) { jwt_user_id }
     let(:credit_card_id) { 'cc-1' }
-    let(:payment_intent) { Stripe::PaymentIntent.create(amount: 200, currency: 'usd') }
     let(:order) { Fabricate(:order, seller_id: seller_id, buyer_id: user_id, external_charge_id: payment_intent.id) }
 
     let(:mutation) do

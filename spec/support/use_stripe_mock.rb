@@ -33,6 +33,11 @@ RSpec.shared_context 'use stripe mock' do
       capture: true
     )
   end
+
+  let(:payment_intent) { Stripe::PaymentIntent.create(amount: 20_00, currency: 'usd', capture_method: 'manual') }
+  let(:requires_action_payment_intent) { Stripe::PaymentIntent.create(amount: 3184, currency: 'usd', capture_method: 'manual') }
+  let(:requires_payment_method_payment_intent) { Stripe::PaymentIntent.create(amount: 3178, currency: 'usd', capture_method: 'manual') }
+  let(:requires_capture_payment_intent) { Stripe::PaymentIntent.create(amount: 3169, currency: 'usd', capture_method: 'manual') }
 end
 
 RSpec.configure do |rspec|

@@ -10,8 +10,6 @@ describe PaymentService, type: :services do
   let(:seller_amount) { 10_00 }
   let(:credit_card) { { external_id: stripe_customer.default_source, customer_account: { external_id: stripe_customer.id } } }
   let(:merchant_account) { { external_id: 'ma-1' } }
-  let(:payment_intent) { Stripe::PaymentIntent.create(amount: 200, currency: 'usd') }
-  let(:failed_payment_intent) { Stripe::PaymentIntent.create(amount: 3178, currency: 'usd') }
   let(:params) do
     {
       buyer_amount: buyer_amount,
@@ -39,7 +37,7 @@ describe PaymentService, type: :services do
         external_type: Transaction::PAYMENT_INTENT
       )
     end
-    it 'creates transaction in REQUIRES_ACTION state when payment intent couldnt be confirmed' do
+    it 'returns transaction in REQUIRES_ACTION state when payment intent couldnt be confirmed' do
       transaction = PaymentService.hold_charge(params.merge(buyer_amount: 3184))
       expect(transaction).to have_attributes(
         amount_cents: 3184,
@@ -62,11 +60,11 @@ describe PaymentService, type: :services do
       expect(transaction).to have_attributes(amount_cents: payment_intent.amount, transaction_type: Transaction::CAPTURE, source_id: payment_intent.payment_method, status: Transaction::SUCCESS)
     end
     it 'catches Stripe errors and returns a failed transaction' do
-      Fabricate(:transaction, external_id: failed_payment_intent.id, external_type: Transaction::PAYMENT_INTENT)
+      Fabricate(:transaction, external_id: requires_payment_method_payment_intent.id, external_type: Transaction::PAYMENT_INTENT)
       allow_any_instance_of(Stripe::PaymentIntent).to receive(:capture)
-      transaction = PaymentService.capture_authorized_charge(failed_payment_intent.id)
+      transaction = PaymentService.capture_authorized_charge(requires_payment_method_payment_intent.id)
       expect(transaction).to have_attributes(
-        external_id: failed_payment_intent.id,
+        external_id: requires_payment_method_payment_intent.id,
         failure_code: 'card_declined',
         failure_message: 'Not enough funds.',
         decline_code: 'insufficient_funds',
