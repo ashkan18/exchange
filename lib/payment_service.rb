@@ -14,7 +14,7 @@ module PaymentService
       # @TODO: we can remove this code after 7 days of moving to payment intents
       charge = Stripe::Charge.retrieve(external_id)
       charge.capture
-      Transaction.new(external_id: charge.id, source_id: charge.source.id, destination_id: charge.destination, amount_cents: charge.amount, transaction_type: Transaction::CAPTURE, status: Transaction::SUCCESS)
+      Transaction.new(external_id: charge.id, source_id: charge.payment_method, destination_id: charge.destination, amount_cents: charge.amount, transaction_type: Transaction::CAPTURE, status: Transaction::SUCCESS)
     when Transaction::PAYMENT_INTENT
       payment_intent = Stripe::PaymentIntent.retrieve(external_id)
       payment_intent.capture
@@ -79,13 +79,13 @@ module PaymentService
 
   def self.update_transaction_with_payment_intent(transaction, payment_intent)
     case payment_intent.status # https://stripe.com/docs/payments/intents#intent-statuses
-    when 'requires_action', 'requires_source_action'
+    when 'requires_action'
       transaction.status = Transaction::REQUIRES_ACTION
     when 'requires_capture'
       transaction.status = Transaction::REQUIRES_CAPTURE
     when 'succeeded'
       transaction.status = Transaction::SUCCESS
-    when 'requires_payment_method', 'requires_source'
+    when 'requires_payment_method'
       # attempting confirm failed
       transaction.status = Transaction::FAILURE
       transaction.failure_code = payment_intent.last_payment_error.code
