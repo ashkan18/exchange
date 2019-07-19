@@ -61,7 +61,7 @@ module PaymentService
       metadata: metadata,
       capture_method: capture ? 'automatic' : 'manual',
       confirm: true, # it creates payment intent and tries to confirm at the same time
-      setup_future_usage: 'off-session',
+      setup_future_usage: 'off_session',
       confirmation_method: 'manual'
     )
     new_transaction = Transaction.new(
