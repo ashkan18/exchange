@@ -79,13 +79,13 @@ module PaymentService
 
   def self.update_transaction_with_payment_intent(transaction, payment_intent)
     case payment_intent.status # https://stripe.com/docs/payments/intents#intent-statuses
-    when 'requires_action'
+    when 'requires_action', 'requires_source_action'
       transaction.status = Transaction::REQUIRES_ACTION
     when 'requires_capture'
       transaction.status = Transaction::REQUIRES_CAPTURE
     when 'succeeded'
       transaction.status = Transaction::SUCCESS
-    when 'requires_payment_method'
+    when 'requires_payment_method', 'requires_source'
       # attempting confirm failed
       transaction.status = Transaction::FAILURE
       transaction.failure_code = payment_intent.last_payment_error.code
@@ -93,7 +93,7 @@ module PaymentService
       transaction.decline_code = payment_intent.last_payment_error.decline_code
     else
       # unknown status raise error
-      raise 'Unknown transaction status'
+      raise "Unknown transaction status: #{payment_intent.status}"
     end
   end
 
