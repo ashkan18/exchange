@@ -108,6 +108,7 @@ module OrderService
       return if transaction.blank?
 
       order.transactions << transaction
+      order.update!(external_charge_id: transaction.external_id) if transaction.requires_action?
       PostTransactionNotificationJob.perform_later(transaction.id, TransactionEvent::CREATED, user_id)
     end
   end

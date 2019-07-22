@@ -1,10 +1,21 @@
 module PaymentService
+  PAYMENT_REQUIRES_CONFIRM_STATUS = 'requires_confirm'
   def self.hold_charge(charge_params)
     create_payment_intent(charge_params.merge(capture: false))
   end
 
   def self.immediate_capture(charge_params)
     create_payment_intent(charge_params.merge(capture: true))
+  end
+
+  def retry(payment_intent_id)
+    transaction = Transaction.find_by(external_id: payment_intent_id)
+    payment_intent = Stripe::PaymentIntent.retrieve(external_id)
+    raise 'payment intent cannot be confirmed' unless payment_intent.status == PAYMENT_REQUIRES_CONFIRM_STATUS
+    payment_intent.confirm
+    new_transaction = Transaction.new(external_id: payment_intent.id, source_id: payment_intent.payment_method, destination_id: payment_intent.transfer_data&.destination, amount_cents: payment_intent.amount, transaction_type: transaction.transaction_type)
+    update_transaction_with_payment_intent(new_transaction, payment_intent)
+    new_transaction
   end
 
   def self.capture_authorized_charge(external_id)

@@ -14,11 +14,17 @@ class OrderProcessor
     raise Errors::ValidationError, @error unless valid?
 
     deduct_inventory
-    @transaction = PaymentService.hold_charge(construct_charge_params)
+    @transaction = if @order.external_charge_id
+      PaymentService.hold_charge(construct_charge_params)
+    else
+      PaymentService.retry(@order.external_charge_id)
+    end
+
     raise Errors::FailedTransactionError.new(:charge_authorization_failed, @transaction) if @transaction.failed?
     raise Errors::PaymentRequiresActionError, @transaction if @transaction.requires_action?
 
     @order.update!(external_charge_id: @transaction.external_id)
+  rescue Errors::PaymentRequiresActionError
   rescue Errors::ValidationError, Errors::ProcessingError => e
     undeduct_inventory
     raise e
