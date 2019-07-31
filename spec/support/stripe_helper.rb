@@ -33,6 +33,21 @@ RSpec.shared_context 'include stripe helper' do
     mock_payment_intent_call(:create, payment_intent)
   end
 
+  def prepare_payment_intent_confirm_failure(charge_error:, payment_method: 'cc_1', amount: 20_00)
+    payment_intent = double(id: 'pi_1', payment_method: payment_method, amount: amount, capture_method: 'manual', status: 'processing', transfer_data: double(destination: 'ma_1'), last_payment_error: double(charge_error))
+    error = Stripe::CardError.new(charge_error[:message], charge_error[:decline_code], charge_error[:code])
+    allow(payment_intent).to receive(:confirm).and_raise(error)
+    allow(error).to receive(:json_body).and_return(error: { payment_intent: basic_payment_intent(status: 'requires_payment_method', capture: true, amount: amount, code: charge_error[:code], decline_code: charge_error[:decline_code]) })
+    mock_payment_intent_call(:retrieve, payment_intent)
+  end
+
+  def prepare_payment_intent_confirm_success(payment_method: 'cc_1', amount: 20_00)
+    payment_intent = double(id: 'pi_1', payment_method: payment_method, amount: amount, capture_method: 'manual', transfer_data: double(destination: 'ma_1'))
+    allow(payment_intent).to receive(:status).and_return('processing', 'requires_capture')
+    allow(payment_intent).to receive(:confirm)
+    mock_payment_intent_call(:retrieve, payment_intent)
+  end
+
   def prepare_payment_intent_capture_failure(charge_error:, payment_method: 'cc_1', amount: 20_00)
     payment_intent = double(id: 'pi_1', payment_method: payment_method, amount: amount, capture_method: 'manual', status: 'requires_capture', transfer_data: double(destination: 'ma_1'), last_payment_error: double(charge_error))
     error = Stripe::CardError.new(charge_error[:message], charge_error[:decline_code], charge_error[:code])
@@ -63,6 +78,11 @@ RSpec.shared_context 'include stripe helper' do
     payment_intent = double(id: 'pi_1', payment_method: payment_method, amount: amount, transfer_data: double(destination: 'ma_1'), charges: [double(id: 'ch_1')])
     allow(payment_intent).to receive(:status).and_return('requires_capture', 'succeeded')
     allow(Stripe::Refund).to receive(:create).with(charge: 'ch_1', reverse_transfer: true).and_raise(refund_error)
+    mock_payment_intent_call(:retrieve, payment_intent)
+  end
+
+  def mock_retrieve_payment_intent(status:)
+    payment_intent = double(id: 'pi_1', status: status)
     mock_payment_intent_call(:retrieve, payment_intent)
   end
 

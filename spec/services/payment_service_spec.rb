@@ -73,6 +73,35 @@ describe PaymentService, type: :services do
     end
   end
 
+  describe '#confirm_payment_intent' do
+    it 'raises error if payment_intent not in expected state' do
+      mock_retrieve_payment_intent(status: 'requires_action')
+      expect { PaymentService.confirm_payment_intent('pi_1') }.to raise_error(Errors::ProcessingError)
+    end
+    it 'confirms the payment intent and stores transaction' do
+      prepare_payment_intent_confirm_success
+      transaction = PaymentService.confirm_payment_intent('pi_1')
+      expect(transaction).to have_attributes(
+        external_id: 'pi_1',
+        external_type: Transaction::PAYMENT_INTENT,
+        transaction_type: Transaction::CONFIRM,
+        status: Transaction::SUCCESS
+      )
+    end
+    it 'confirms the payment intent and stores failed transaction' do
+      prepare_payment_intent_confirm_failure(charge_error: { code: 'capture_charge', decline_code: 'do_not_honor', message: 'The card was declined' })
+      transaction = PaymentService.confirm_payment_intent('pi_1')
+      expect(transaction).to have_attributes(
+        external_id: 'pi_1',
+        external_type: Transaction::PAYMENT_INTENT,
+        failure_code: 'capture_charge',
+        failure_message: 'Your card was declined.',
+        decline_code: 'do_not_honor',
+        status: Transaction::FAILURE
+      )
+    end
+  end
+
   describe '#capture_authorized_hold' do
     it 'captures a payment_intent' do
       prepare_payment_intent_capture_success(amount: 20_00)

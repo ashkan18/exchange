@@ -24,7 +24,12 @@ class OrderProcessor
     raise Errors::ValidationError, @validation_error unless valid?
 
     deduct_inventory
-    @transaction = PaymentService.hold_payment(construct_charge_params)
+    @transaction = if @order.external_charge_id
+      # we already have a payment intent on this order
+      PaymentService.confirm(@order.external_charge_id)
+    else
+      PaymentService.hold_payment(construct_charge_params)
+    end
     undeduct_inventory if @transaction.failed? || @transaction.requires_action?
   rescue Errors::InsufficientInventoryError
     undeduct_inventory

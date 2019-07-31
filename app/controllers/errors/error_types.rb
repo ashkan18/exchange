@@ -55,6 +55,7 @@ module Errors
     processing: %i[
       artwork_version_mismatch
       cannot_capture
+      cannot_confirm
       capture_failed
       charge_authorization_failed
       insufficient_inventory
