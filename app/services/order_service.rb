@@ -45,42 +45,30 @@ module OrderService
     end
 
     order_processor = OrderProcessor.new(order, user_id)
-    raise Errors::ValidationError, order_processor.validation_error unless order_processor.valid?
+    # raise Errors::ValidationError, order_processor.validation_error unless order_processor.valid?(:submit)
 
-    order.submit! do
-      order.line_items.each { |li| li.update!(commission_fee_cents: li.current_commission_fee_cents) }
-      totals = BuyOrderTotals.new(order)
-      order.update!(
-        transaction_fee_cents: totals.transaction_fee_cents,
-        commission_rate: order.current_commission_rate,
-        commission_fee_cents: totals.commission_fee_cents,
-        seller_total_cents: totals.seller_total_cents
-      )
-      order_processor.hold!
-      raise Errors::InsufficientInventoryError if order_processor.failed_inventory?
-      # in case of failed transaction, we need to rollback this block,
-      # but still need to add transaction, so we raise an ActiveRecord::Rollback
-      raise ActiveRecord::Rollback if order_processor.failed_payment? || order_processor.requires_action?
-
-      order.update!(external_charge_id: order_processor.transaction.external_id)
+    order_processor.transition(:submit!)
+    order_processor.deduct_inventory!
+    if order.failed_inventory?
+      order_processor.undo!
+      raise Errors::InsufficientInventoryError
     end
 
-    order.transactions << order_processor.transaction
-    PostTransactionNotificationJob.perform_later(order_processor.transaction.id, user_id)
-    raise Errors::FailedTransactionError.new(:charge_authorization_failed, order_processor.transaction) if order_processor.failed_payment?
+    order_processor.set_totals!
+    order_processor.hold
+    order_processor.store_transaction
 
-    if order_processor.requires_action?
-      # because of an issue with `ActiveRecord::Rollback` we have to force a reload here
-      # rollback does not clean the model and calling update on it will raise error
-      order.reload.update!(external_charge_id: order_processor.transaction.external_id)
-      raise Errors::PaymentRequiresActionError, order_processor.action_data
+    if order_processor.failed_payment?
+      order_processor.undo!
+      raise Errors::FailedTransactionError.new(:charge_authorization_failed, order_processor.transaction)
+    elsif order_processor.requires_action?
+      order_processor.undo!
+      order_processor.set_payment!
+      raise Errors::PaymentRequiresActionError.new(order_processor.action_data)
+    else
+      order_processor.set_payment!
+      order_processor.set_follow_ups
     end
-
-    OrderEvent.delay_post(order, Order::SUBMITTED, user_id)
-    OrderFollowUpJob.set(wait_until: order.state_expires_at).perform_later(order.id, order.state)
-    ReminderFollowUpJob.set(wait_until: order.state_expiration_reminder_time).perform_later(order.id, order.state)
-    Exchange.dogstatsd.increment 'order.submitted'
-    order
   end
 
   def self.fulfill_at_once!(order, fulfillment, user_id)
