@@ -60,7 +60,15 @@ module PaymentService
     raise Errors::ProcessingError, :cannot_confirm unless payment_intent.status == 'processing'
 
     payment_intent.confirm
-    Transaction.new(external_id: payment_intent.id, external_type: Transaction::PAYMENT_INTENT, transaction_type: Transaction::CONFIRM, status: Transaction::SUCCESS, payload: payment_intent.to_h)
+    Transaction.new(
+      external_id: payment_intent.id,
+      external_type: Transaction::PAYMENT_INTENT,
+      transaction_type: Transaction::CONFIRM,
+      status: Transaction::SUCCESS,
+      amount_cents: payment_intent.amount,
+      source_id: payment_intent.payment_method,
+      payload: payment_intent.to_h
+    )
   rescue Stripe::CardError => e
     transaction_from_payment_intent_failure(e)
   end

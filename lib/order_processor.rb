@@ -26,7 +26,7 @@ class OrderProcessor
     deduct_inventory
     @transaction = if @order.external_charge_id
       # we already have a payment intent on this order
-      PaymentService.confirm(@order.external_charge_id)
+      PaymentService.confirm_payment_intent(@order.external_charge_id)
     else
       PaymentService.hold_payment(construct_charge_params)
     end
