@@ -18,13 +18,23 @@ class OrderProcessor
     @deducted_inventory = []
     @validated = false
     @insufficient_inventory = false
-    @total_sets = false
-    @state_changed = false
+    @totals_set = false
   end
+
+  def undo!(state_transition = nil)
+    undeduct_inventory! unless @deducted_inventory.empty?
+    reset_totals! if @totals_set
+    transition(state_transition) if state_transition.present?
+  end
+
+  def reset_totals!
+    order.line_items.each { |li|  li.update!(commission_fee_cents: nil) }
+    order.update!(transaction_fee_cents: nil, commission_rate: nil, commission_fee_cents: nil, seller_total_cents: nil)
+  end
+
 
   def transition(action)
     order.send(action)
-    @state_changed = true
   end
 
   def set_totals!
@@ -101,11 +111,16 @@ class OrderProcessor
   end
 
   def store_transaction
-    PostTransactionNotificationJob.perform_later(order_processor.transaction.id, user_id)
+    order.transactions << transaction
+    PostTransactionNotificationJob.perform_later(transaction.id, @user_id)
+  end
+
+  def set_payment!
+    @order.update!(external_charge_id: transaction.external_id)
   end
 
   def set_follow_ups
-    OrderEvent.delay_post(order, Order::SUBMITTED, user_id)
+    OrderEvent.delay_post(order, Order::SUBMITTED, @user_id)
     OrderFollowUpJob.set(wait_until: order.state_expires_at).perform_later(order.id, order.state)
     ReminderFollowUpJob.set(wait_until: order.state_expiration_reminder_time).perform_later(order.id, order.state)
     Exchange.dogstatsd.increment 'order.submitted'

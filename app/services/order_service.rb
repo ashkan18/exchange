@@ -45,30 +45,31 @@ module OrderService
     end
 
     order_processor = OrderProcessor.new(order, user_id)
-    # raise Errors::ValidationError, order_processor.validation_error unless order_processor.valid?(:submit)
+    raise Errors::ValidationError, order_processor.validation_error unless order_processor.valid?
 
     order_processor.transition(:submit!)
     order_processor.deduct_inventory!
-    if order.failed_inventory?
-      order_processor.undo!
+    if order_processor.failed_inventory?
+      order_processor.undo!(:revoke!)
       raise Errors::InsufficientInventoryError
     end
 
     order_processor.set_totals!
-    order_processor.hold
+    order_processor.hold!
     order_processor.store_transaction
 
     if order_processor.failed_payment?
-      order_processor.undo!
+      order_processor.undo!(:revoke!)
       raise Errors::FailedTransactionError.new(:charge_authorization_failed, order_processor.transaction)
     elsif order_processor.requires_action?
-      order_processor.undo!
+      order_processor.undo!(:revoke!)
       order_processor.set_payment!
       raise Errors::PaymentRequiresActionError.new(order_processor.action_data)
     else
       order_processor.set_payment!
       order_processor.set_follow_ups
     end
+    order
   end
 
   def self.fulfill_at_once!(order, fulfillment, user_id)

@@ -66,7 +66,7 @@ class Order < ApplicationRecord
     SHIP = 'ship'.freeze
   ].freeze
 
-  ACTIONS = %i[abandon submit approve reject fulfill seller_lapse buyer_lapse refund].freeze
+  ACTIONS = %i[abandon revoke submit approve reject fulfill seller_lapse buyer_lapse refund].freeze
   ACTION_REASONS = {
     seller_lapse: REASONS[CANCELED][:seller_lapsed],
     buyer_lapse: REASONS[CANCELED][:buyer_lapsed],
@@ -247,6 +247,7 @@ class Order < ApplicationRecord
     machine = MicroMachine.new(state)
     machine.when(:abandon, PENDING => ABANDONED)
     machine.when(:submit, PENDING => SUBMITTED)
+    machine.when(:revoke, SUBMITTED => PENDING)
     machine.when(:approve, SUBMITTED => APPROVED)
     machine.when(:reject, SUBMITTED => CANCELED)
     machine.when(:seller_lapse, SUBMITTED => CANCELED)
