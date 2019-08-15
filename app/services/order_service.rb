@@ -50,7 +50,7 @@ module OrderService
     order_processor.transition(:submit!)
     order_processor.deduct_inventory!
     if order_processor.failed_inventory?
-      order_processor.undo!(:revoke!)
+      order_processor.rollback!
       raise Errors::InsufficientInventoryError
     end
 
@@ -59,10 +59,10 @@ module OrderService
     order_processor.store_transaction
 
     if order_processor.failed_payment?
-      order_processor.undo!(:revoke!)
+      order_processor.rollback!
       raise Errors::FailedTransactionError.new(:charge_authorization_failed, order_processor.transaction)
     elsif order_processor.requires_action?
-      order_processor.undo!(:revoke!)
+      order_processor.rollback!
       order_processor.set_payment!
       raise Errors::PaymentRequiresActionError.new(order_processor.action_data)
     else

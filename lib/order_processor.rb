@@ -10,8 +10,9 @@ class OrderProcessor
 
   attr_accessor :order, :transaction, :validation_error
 
-  def initialize(order, user_id)
+  def initialize(order, user_id, offer = nil)
     @order = order
+    @offer = offer
     @user_id = user_id
     @validation_error = nil
     @transaction = nil
@@ -19,34 +20,36 @@ class OrderProcessor
     @validated = false
     @insufficient_inventory = false
     @totals_set = false
+    @state_changed = false
   end
 
-  def undo!(state_transition = nil)
+  def rollback!
     undeduct_inventory! unless @deducted_inventory.empty?
     reset_totals! if @totals_set
-    transition(state_transition) if state_transition.present?
+    order.rollback! if @state_changed
   end
-
-  def reset_totals!
-    order.line_items.each { |li|  li.update!(commission_fee_cents: nil) }
-    order.update!(transaction_fee_cents: nil, commission_rate: nil, commission_fee_cents: nil, seller_total_cents: nil)
-  end
-
 
   def transition(action)
     order.send(action)
+    @state_changed = true
   end
 
   def set_totals!
-    order.line_items.each { |li| li.update!(commission_fee_cents: li.current_commission_fee_cents) }
-    totals = BuyOrderTotals.new(order)
+    order.line_items.each { |li| li.update!(commission_fee_cents: li.current_commission_fee_cents) } if order.mode === Order::BUY
+    totals = order.mode == Order::BUY ? BuyOrderTotals.new(@order) : OfferOrderTotals.new(@offer)
     order.update!(
       transaction_fee_cents: totals.transaction_fee_cents,
       commission_rate: order.current_commission_rate,
       commission_fee_cents: totals.commission_fee_cents,
       seller_total_cents: totals.seller_total_cents
     )
+
     @totals_set = true
+  end
+
+  def reset_totals!
+    order.line_items.each { |li|  li.update!(commission_fee_cents: nil) } if order.mode === Order::BUY
+    order.update!(transaction_fee_cents: nil, commission_rate: nil, commission_fee_cents: nil, seller_total_cents: nil)
   end
 
   def hold!

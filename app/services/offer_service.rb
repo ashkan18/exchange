@@ -66,33 +66,29 @@ module OfferService
     raise Errors::ValidationError, :not_last_offer unless offer.last_offer?
 
     order = offer.order
-    order_processor = OrderProcessor.new(order, user_id)
+    order_processor = OrderProcessor.new(order, user_id, offer)
     raise Errors::ValidationError, order_processor.validation_error unless order_processor.valid?
-
-    order.approve! do
-      totals = OfferOrderTotals.new(offer)
-      order.update!(
-        transaction_fee_cents: totals.transaction_fee_cents,
-        commission_rate: totals.commission_rate,
-        commission_fee_cents: totals.commission_fee_cents,
-        seller_total_cents: totals.seller_total_cents
-      )
-      order_processor.charge!
-      raise Errors::InsufficientInventoryError if order_processor.failed_inventory?
-      # in case of failed transaction, we need to rollback this block,
-      # but still need to add transaction, so we raise an ActiveRecord::Rollback
-      raise ActiveRecord::Rollback if order_processor.failed_payment?
-
-      order.update!(external_charge_id: order_processor.transaction.external_id)
+    order_processor.transition(:approve!)
+    order_processor.deduct_inventory!
+    if order_processor.failed_inventory?
+      order_processor.rollback!
+      raise Errors::InsufficientInventoryError
     end
-    order.transactions << order_processor.transaction
-    PostTransactionNotificationJob.perform_later(order_processor.transaction.id, user_id)
-    raise Errors::FailedTransactionError.new(:capture_failed, order_processor.transaction) if order_processor.failed_payment?
-
-    OrderEvent.delay_post(order, Order::APPROVED, user_id)
-    OrderFollowUpJob.set(wait_until: order.state_expires_at).perform_later(order.id, order.state)
-    ReminderFollowUpJob.set(wait_until: order.state_expiration_reminder_time).perform_later(order.id, order.state)
-    Exchange.dogstatsd.increment 'order.approved'
+    order_processor.set_totals!
+    order_processor.charge!
+    order_processor.store_transaction
+    if order_processor.failed_payment?
+      order_processor.rollback!
+      raise Errors::FailedTransactionError.new(:capture_failed, order_processor.transaction)
+    elsif order_processor.requires_action?
+      order_processor.rollback!
+      order_processor.set_payment!
+      raise Errors::PaymentRequiresActionError.new(order_processor.action_data)
+    else
+      order_processor.set_payment!
+      order_processor.set_follow_ups
+    end
+    order
   end
 
   class << self
