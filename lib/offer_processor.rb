@@ -34,12 +34,18 @@ class OfferProcessor
   end
 
   def confirm_payment_method!
-    @transaction = PaymentMethodService.confirm_payment_method!(offer.order)
-    order.transactions << transaction
-    return unless @transaction.requires_action?
+    existing_confirmation_attempt = order.transactions.where(external_type: Transaction::SETUP_INTENT).order(created_at: :desc)&.first
+    if existing_confirmation_attempt && existing_confirmation_attempt.source_id == order.credit_card[:external_id]
+      # we have an ongoing setup intent with this card, check if it's confirmed
+      PaymentMethodService.verify(existing_confirmation_attempt)
+    else
+      @transaction = PaymentMethodService.confirm_payment_method!(offer.order)
+      order.transactions << transaction
+      return unless @transaction.requires_action?
 
-    Exchange.dogstatsd.increment 'offer.requires_action'
-    raise Errors::PaymentRequiresActionError, transaction.action_data
+      Exchange.dogstatsd.increment 'offer.requires_action'
+      raise Errors::PaymentRequiresActionError, transaction.action_data
+    end
   end
 
   def set_order_totals!
