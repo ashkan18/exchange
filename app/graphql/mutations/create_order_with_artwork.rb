@@ -8,7 +8,9 @@ class Mutations::CreateOrderWithArtwork < Mutations::BaseMutation
   field :order_or_error, Mutations::OrderOrFailureUnionType, 'A union of success/failure', null: false
 
   def resolve(artwork_id:, edition_set_id: nil, quantity: 1)
-    order = OrderService.create_with_artwork!(
+    order_id = SecureRandom.uuid
+    event = Commands::OrderPlaced.new(data: {
+      id: order_id,
       buyer_id: context[:current_user][:id],
       buyer_type: Order::USER,
       mode: Order::BUY,
@@ -17,7 +19,9 @@ class Mutations::CreateOrderWithArtwork < Mutations::BaseMutation
       quantity: quantity,
       user_agent: context[:user_agent],
       user_ip: context[:user_ip]
-    )
+    })
+    Rails.configuration.event_store.publish(event)
+    order = Order.find(order_id)
     {
       order_or_error: { order: order }
     }

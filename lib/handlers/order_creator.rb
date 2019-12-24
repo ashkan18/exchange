@@ -1,39 +1,45 @@
-class OrderCreator
-  attr_reader :errors
-  def initialize(buyer_id:, buyer_type:, mode:, quantity: 1, artwork_id:, edition_set_id: nil, user_agent:, user_ip:)
+class Handlers::OrderCreator
+  def call(event)
+    @event = event
     @errors = []
     @valid = nil
-    @buyer_id = buyer_id
-    @buyer_type = buyer_type
-    @mode = mode
-    @quantity = quantity
-    @artwork_id = artwork_id
-    @edition_set_id = edition_set_id
-    @user_agent = user_agent
-    @user_ip = user_ip
+    @buyer_id = event.data[:buyer_id]
+    @buyer_type = event.data[:buyer_type]
+    @mode = event.data[:mode]
+    @quantity = event.data[:quantity]
+    @artwork_id = event.data[:artwork_id]
+    @edition_set_id = event.data[:edition_set_id]
+    @user_agent = event.data[:user_agent]
+    @user_ip = event.data[:user_ip]
+    @id = event.data[:id]
+    create_method = event.data[:find_active_or_create] ? :find_or_create! : :create!
+    self.send(create_method)
+  end
+
+  private
+
+  def find_or_create!()
+    existing_order || create!
+  end
+
+  def existing_order
+    @existing_order ||= Order.joins(:line_items).find_by(mode: @mode, buyer_id: @buyer_id, buyer_type: @buyer_type, state: [Order::PENDING, Order::SUBMITTED], line_items: { artwork_id: @artwork_id, edition_set_id: edition_set_id, quantity: @quantity })
+  end
+
+  def create!
+    raise Errors::ValidationError, @errors.first unless valid?
+
+    @order ||= create_order
+    event = Commands::OrderCreated.new(data: {id: @order.id})
+    Rails.configuration.event_store.publish(event)
+  rescue ActiveRecord::RecordInvalid => e
+    raise Errors::ValidationError.new(:invalid_order, message: e.message)
   end
 
   def valid?
     @valid ||= valid_artwork? && valid_edition_set? && valid_action? && valid_price?
   end
 
-  def find_or_create!(&post_create_block)
-    existing_order || create!(&post_create_block)
-  end
-
-  def create!
-    raise Errors::ValidationError, @errors.first unless valid?
-
-    @order ||= begin
-      created_order = create_order
-      yield(created_order) if block_given?
-      created_order
-    end
-  rescue ActiveRecord::RecordInvalid => e
-    raise Errors::ValidationError.new(:invalid_order, message: e.message)
-  end
-
-  private
 
   def valid_artwork?
     artwork_error = if artwork.nil?
@@ -104,6 +110,7 @@ class OrderCreator
   def create_order
     Order.transaction do
       order = Order.create!(
+        id: @id,
         mode: @mode,
         buyer_id: @buyer_id,
         buyer_type: @buyer_type,
