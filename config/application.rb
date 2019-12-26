@@ -39,7 +39,15 @@ module Exchange
     config.active_job.queue_adapter = :sidekiq
 
     config.to_prepare do
-      Rails.configuration.event_store = RailsEventStore::Client.new
+      Rails.configuration.event_store = RailsEventStore::Client.new(
+        request_metadata: -> (env) do
+          request = ActionDispatch::Request.new(env)
+          {
+            remote_ip:  request.remote_ip,
+            request_id: request.uuid,
+          }
+        end
+      )
       # add subscribers here
       Rails.configuration.event_store.tap do |store|
         store.subscribe(Handlers::OrderCreator, to: [Commands::OrderPlaced])

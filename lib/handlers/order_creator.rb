@@ -9,8 +9,8 @@ class Handlers::OrderCreator
     @quantity = event.data[:quantity]
     @artwork_id = event.data[:artwork_id]
     @edition_set_id = event.data[:edition_set_id]
-    @user_agent = event.data[:user_agent]
-    @user_ip = event.data[:user_ip]
+    @user_agent = event.metadata[:user_agent]
+    @user_ip = event.metadata[:user_ip]
     @id = event.data[:id]
     create_method = event.data[:find_active_or_create] ? :find_or_create! : :create!
     self.send(create_method)
@@ -28,10 +28,9 @@ class Handlers::OrderCreator
 
   def create!
     raise Errors::ValidationError, @errors.first unless valid?
-
     @order ||= create_order
     event = Commands::OrderCreated.new(data: {id: @order.id})
-    Rails.configuration.event_store.publish(event)
+    Rails.configuration.event_store.publish(event, stream_name: "Order$#{@order.id}")
   rescue ActiveRecord::RecordInvalid => e
     raise Errors::ValidationError.new(:invalid_order, message: e.message)
   end

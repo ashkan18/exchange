@@ -1,12 +1,13 @@
 require 'rails_helper'
 require 'support/gravity_helper'
 
-describe OrderCreator, type: :services do
+describe Handlers::OrderCreator, type: :services do
   let(:gravity_artwork) { gravity_v1_artwork }
   let(:artwork_id) { 'artwork-id' }
   let(:edition_set_id) { nil }
   let(:order_mode) { Order::BUY }
-  let(:order_creator) { OrderCreator.new(buyer_id: 'user1', buyer_type: Order::USER, mode: order_mode, quantity: 1, artwork_id: artwork_id, edition_set_id: edition_set_id, user_agent: '007', user_ip: '0.0.7') }
+  let(:event) { double(data: { buyer_id: 'user1', buyer_type: Order::USER, mode: order_mode, quantity: 1, artwork_id: artwork_id, edition_set_id: edition_set_id}, metadata: { user_agent: '007', user_ip: '0.0.7' })}
+  let(:order_creator) { Handlers::OrderCreator.new.call(event) }
   before do
     allow(Adapters::GravityV1).to receive(:get).with("/artwork/#{artwork_id}").once.and_return(gravity_artwork)
   end

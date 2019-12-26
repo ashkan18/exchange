@@ -20,7 +20,7 @@ class Mutations::CreateOrderWithArtwork < Mutations::BaseMutation
       user_agent: context[:user_agent],
       user_ip: context[:user_ip]
     })
-    Rails.configuration.event_store.publish(event)
+    Rails.configuration.event_store.publish(event, stream_name: "Order$#{order_id}")
     order = Order.find(order_id)
     {
       order_or_error: { order: order }
